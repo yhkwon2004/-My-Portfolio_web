@@ -163,6 +163,7 @@ code {
   background-size: cover;
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
   transform: scale(1.08) translate3d(0, 28px, 0);
   transition: opacity 760ms ease, transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
   transform-origin: center;
@@ -182,6 +183,7 @@ code {
 .scene.active {
   opacity: 1;
   pointer-events: auto;
+  overflow-y: auto;
   transform: scale(1) translate3d(0, 0, 0);
 }
 
@@ -396,8 +398,8 @@ code {
   position: relative;
   z-index: 2;
   width: min(1180px, 94vw);
-  max-height: min(760px, 82vh);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   padding: clamp(1.1rem, 3vw, 2.3rem);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -417,8 +419,8 @@ code {
 
 .intro-panel {
   width: min(1080px, 92vw);
-  max-height: min(780px, 84vh);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .intro-detail-dock {
@@ -694,6 +696,28 @@ code {
   gap: clamp(1rem, 3vw, 2rem);
 }
 
+.contact-path {
+  grid-column: 1 / -1;
+  min-height: clamp(190px, 28vh, 260px);
+  align-items: flex-start;
+  justify-content: flex-end;
+  background:
+    linear-gradient(160deg, rgba(141, 243, 170, 0.16), rgba(255, 255, 255, 0.04)),
+    rgba(255, 255, 255, 0.06);
+}
+
+.path-glow {
+  position: absolute;
+  inset: auto auto 18% 8%;
+  width: min(240px, 28vw);
+  height: min(240px, 28vw);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.2), rgba(141, 243, 170, 0.18) 28%, rgba(114, 244, 255, 0.12) 48%, transparent 72%);
+  filter: blur(14px);
+  opacity: 0.78;
+}
+
 .path-card {
   min-height: clamp(300px, 50vh, 520px);
   padding: clamp(1.3rem, 3vw, 2.4rem);
@@ -896,11 +920,11 @@ code {
 
 .featured-project-shell {
   width: min(1320px, calc(100vw - 72px));
-  min-height: min(780px, calc(100vh - 126px));
+  min-height: min(760px, calc(100vh - 126px));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 1rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .featured-project-intro {
@@ -914,12 +938,14 @@ code {
 .featured-project-layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  grid-template-columns: minmax(0, 1.04fr) minmax(420px, 0.96fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
 .featured-project-layout > .project-news-card.large {
-  height: 100%;
+  grid-row: 1 / span 2;
+  height: auto;
   min-height: 0;
 }
 
@@ -927,15 +953,16 @@ code {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 0.8rem;
-  overflow: auto;
-  padding-right: 0.15rem;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .featured-project-grid .project-news-card {
   display: grid;
-  grid-template-rows: 168px minmax(0, 1fr);
-  min-height: 340px;
+  grid-template-rows: 148px minmax(0, 1fr);
+  min-height: 0;
 }
 
 .featured-project-grid .project-news-copy h3 {
@@ -949,66 +976,151 @@ code {
   -webkit-box-orient: vertical;
 }
 
-.awards-year-board {
+.awards-toggle-board {
   width: min(1380px, calc(100vw - 72px));
-  max-height: min(800px, calc(100vh - 126px));
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   gap: 1rem;
 }
 
-.award-year-grid {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.85rem;
+.award-year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
 }
 
-.award-year-column {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+.award-year-tabs button {
+  min-width: 130px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(248, 216, 137, 0.1), transparent 24%),
-    rgba(7, 10, 18, 0.46);
-  backdrop-filter: blur(18px);
-  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(7, 10, 18, 0.46);
+  color: var(--text);
+  padding: 0.7rem 0.95rem;
+  text-align: left;
 }
 
-.award-year-column header {
+.award-year-tabs button strong,
+.award-year-tabs button span {
+  display: block;
+}
+
+.award-year-tabs button strong {
+  font-size: 0.98rem;
+}
+
+.award-year-tabs button span {
+  margin-top: 0.16rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.award-year-tabs button.active {
+  border-color: rgba(248, 216, 137, 0.5);
+  background:
+    linear-gradient(135deg, rgba(248, 216, 137, 0.18), rgba(255, 108, 207, 0.08)),
+    rgba(7, 10, 18, 0.62);
+}
+
+.award-list-board {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.award-list-header {
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem 1rem 0.85rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.9rem;
 }
 
-.award-year-column header span {
-  color: transparent;
-  background: linear-gradient(95deg, #ffffff, var(--gold), var(--pink));
-  background-clip: text;
-  -webkit-background-clip: text;
-  font-size: clamp(1.7rem, 3vw, 2.8rem);
-  font-weight: 900;
-  line-height: 1;
-}
-
-.award-year-column header strong {
-  color: var(--muted);
+.award-list-header span {
+  color: var(--gold);
+  font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 900;
 }
 
-.award-year-list {
-  min-height: 0;
+.award-list-header strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #fff;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+}
+
+.award-list-header p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  text-align: right;
+}
+
+.award-list-stack {
   display: grid;
   gap: 0.75rem;
-  overflow: auto;
-  padding: 0.95rem;
+}
+
+.award-record-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 1rem 1.05rem;
+  text-align: left;
+}
+
+.award-record-index span,
+.award-record-index small {
+  display: block;
+}
+
+.award-record-index span {
+  color: var(--gold);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.award-record-index small {
+  margin-top: 0.22rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.award-record-main strong {
+  display: block;
+  color: #fff;
+  font-size: clamp(1rem, 1.3vw, 1.28rem);
+  line-height: 1.35;
+}
+
+.award-record-main p {
+  margin: 0.42rem 0 0;
+  color: var(--muted);
+  line-height: 1.62;
+}
+
+.award-record-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.42rem;
+}
+
+.award-record-tags span {
+  border: 1px solid rgba(114, 244, 255, 0.24);
+  border-radius: 999px;
+  padding: 0.34rem 0.58rem;
+  background: rgba(114, 244, 255, 0.08);
+  color: var(--text);
+  font-size: 0.74rem;
 }
 
 .award-year-card,
@@ -2716,6 +2828,16 @@ code {
   align-content: start;
 }
 
+.scene.intro.active,
+.scene.resume.active,
+.scene.awards.active,
+.scene.contact.active {
+  align-content: start;
+  justify-items: center;
+  padding-top: 96px;
+  padding-bottom: 24px;
+}
+
 .project-news-grid .project-news-card {
   display: grid;
   grid-template-rows: 135px minmax(0, 1fr);
@@ -2827,14 +2949,20 @@ code {
   .resume-map,
   .resume-spotlight {
     grid-template-columns: 1fr;
-    overflow: auto;
+    overflow: visible;
   }
 
   .featured-project-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
   }
 
-  .award-year-grid {
+  .award-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .award-record-card {
     grid-template-columns: 1fr;
   }
 
@@ -2873,6 +3001,10 @@ code {
 
   .project-news-grid {
     grid-template-columns: 1fr;
+  }
+
+  .award-record-tags {
+    justify-content: flex-start;
   }
 
   .showcase-stage {

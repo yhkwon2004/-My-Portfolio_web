@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CursorFollower } from "./CursorFollower";
 import { UnicornBackdrop } from "./UnicornBackdrop";
@@ -137,7 +137,6 @@ export function PortfolioExperience({ initialContent }: Props) {
       const target = event.target instanceof Element ? event.target : null;
       const track = target?.closest<HTMLElement>(".showcase-track");
       const grid = target?.closest<HTMLElement>(".project-news-grid");
-      const awardGrid = target?.closest<HTMLElement>(".award-year-grid");
 
       if (selected) {
         event.preventDefault();
@@ -145,10 +144,6 @@ export function PortfolioExperience({ initialContent }: Props) {
       }
 
       if (phase === "awards") {
-        if (awardGrid) {
-          return;
-        }
-        event.preventDefault();
         return;
       }
 
@@ -164,13 +159,6 @@ export function PortfolioExperience({ initialContent }: Props) {
           const atStart = track.scrollLeft <= 8;
 
           if (delta > 0 && atEnd) {
-            if (!wheelLockRef.current) {
-              wheelLockRef.current = true;
-              setSection("contact");
-              window.setTimeout(() => {
-                wheelLockRef.current = false;
-              }, 920);
-            }
             return;
           }
 
@@ -376,6 +364,12 @@ export function PortfolioExperience({ initialContent }: Props) {
               <strong>프로젝트 기록</strong>
               <small>아이디어가 실제 결과물로 검증된 과정을 탐색합니다.</small>
             </button>
+            <button className="path-card contact-path magnetic" onClick={() => setSection("contact")}>
+              <div className="path-glow" aria-hidden="true" />
+              <span>CONTACT ROUTE</span>
+              <strong>연결 지점</strong>
+              <small>깃허브, 이메일, 블로그 등 외부 채널로 이어지는 마지막 연결 지점입니다.</small>
+            </button>
           </div>
         </section>
 
@@ -413,7 +407,6 @@ export function PortfolioExperience({ initialContent }: Props) {
                 onSelect={setSelected}
                 onPrev={() => scrollTrack(projectTrackRef, -1)}
                 onNext={() => scrollTrack(projectTrackRef, 1)}
-                onExitEnd={() => setSection("contact")}
               />
             ) : (
               <div className="project-news-grid">
@@ -522,8 +515,19 @@ function AwardsYearBoard({
   buckets: { year: string; items: PortfolioItem[] }[];
   onSelect: (item: PortfolioItem) => void;
 }) {
+  const initialYear = buckets.find((bucket) => bucket.items.length)?.year ?? buckets[0]?.year ?? "2025";
+  const [activeYear, setActiveYear] = useState(initialYear);
+
+  useEffect(() => {
+    if (!buckets.some((bucket) => bucket.year === activeYear && bucket.items.length)) {
+      setActiveYear(initialYear);
+    }
+  }, [activeYear, buckets, initialYear]);
+
+  const activeBucket = buckets.find((bucket) => bucket.year === activeYear) ?? buckets[0];
+
   return (
-    <div className="content-panel awards-year-board">
+    <div className="content-panel awards-toggle-board">
       <div className="showcase-header">
         <div>
           <p className="eyebrow">AWARD ARCHIVE</p>
@@ -531,37 +535,55 @@ function AwardsYearBoard({
         </div>
         <span>2023 / 2024 / 2025 / 2026</span>
       </div>
-      <div className="award-year-grid">
+      <div className="award-year-tabs" role="tablist" aria-label="연도별 수상 기록">
         {buckets.map((bucket) => (
-          <section key={bucket.year} className="award-year-column">
-            <header>
-              <span>{bucket.year}</span>
-              <strong>{bucket.items.length}개 항목</strong>
-            </header>
-            <div className="award-year-list">
-              {bucket.items.length ? (
-                bucket.items.map((item, index) => (
-                  <button key={item.id} className="award-year-card magnetic" onClick={() => onSelect(item)}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{koText(item, "title")}</strong>
-                    <p>{koText(item, "summary")}</p>
-                    <div className="tag-row">
-                      {item.tags.slice(0, 3).map((tag) => (
-                        <span key={tag}>{tag}</span>
-                      ))}
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="award-empty-card">
-                  <strong>{bucket.year}</strong>
-                  <p>아직 연결된 수상 기록이 없습니다.</p>
-                </div>
-              )}
-            </div>
-          </section>
+          <button
+            key={bucket.year}
+            className={`magnetic ${bucket.year === activeYear ? "active" : ""}`}
+            onClick={() => setActiveYear(bucket.year)}
+            role="tab"
+            aria-selected={bucket.year === activeYear}
+          >
+            <strong>{bucket.year}</strong>
+            <span>{bucket.items.length}개</span>
+          </button>
         ))}
       </div>
+      <section className="award-list-board">
+        <header className="award-list-header">
+          <div>
+            <span>{activeBucket?.year}</span>
+            <strong>{activeBucket?.items.length ?? 0}개 수상 기록</strong>
+          </div>
+          <p>좁은 칼럼 대신 연도별 기록을 넓은 리스트로 정리했습니다.</p>
+        </header>
+        <div className="award-list-stack">
+          {activeBucket?.items.length ? (
+            activeBucket.items.map((item, index) => (
+              <button key={item.id} className="award-record-card magnetic" onClick={() => onSelect(item)}>
+                <div className="award-record-index">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <small>{item.year}</small>
+                </div>
+                <div className="award-record-main">
+                  <strong>{koText(item, "title")}</strong>
+                  <p>{koText(item, "summary")}</p>
+                </div>
+                <div className="award-record-tags">
+                  {item.tags.slice(0, 4).map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="award-empty-card">
+              <strong>{activeBucket?.year}</strong>
+              <p>아직 연결된 수상 기록이 없습니다.</p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
@@ -574,7 +596,6 @@ function ShowcaseDeck({
   onSelect,
   onPrev,
   onNext,
-  onExitEnd,
   fallbackImage,
   compact,
   variant
@@ -586,7 +607,6 @@ function ShowcaseDeck({
   onSelect: (item: PortfolioItem) => void;
   onPrev: () => void;
   onNext: () => void;
-  onExitEnd?: () => void;
   fallbackImage?: string;
   compact?: boolean;
   variant?: "default" | "project";
@@ -703,16 +723,6 @@ function ShowcaseDeck({
             onFocusCard={() => focusCard(index)}
           />
         ))}
-        {onExitEnd ? (
-          <ReelsExitCard
-            active={activeIndex === items.length}
-            register={(node) => {
-              itemRefs.current[items.length] = node;
-            }}
-            onFocusCard={() => focusCard(items.length)}
-            onExit={onExitEnd}
-          />
-        ) : null}
       </div>
       <div className="project-controls">
         <button className="magnetic" onClick={onPrev}>PREV</button>
@@ -722,46 +732,11 @@ function ShowcaseDeck({
   );
 }
 
-function ReelsExitCard({
-  active,
-  register,
-  onFocusCard,
-  onExit
-}: {
-  active: boolean;
-  register: (node: HTMLElement | null) => void;
-  onFocusCard: () => void;
-  onExit: () => void;
-}) {
-  const handleClick = () => {
-    if (active) {
-      onExit();
-      return;
-    }
-    onFocusCard();
-  };
-
-  return (
-    <motion.article
-      ref={register}
-      className={`reels-card reels-exit-card magnetic ${active ? "active" : ""}`}
-      onClick={handleClick}
-      animate={{
-        scale: active ? 1.08 : 0.9,
-        opacity: active ? 1 : 0.56,
-        zIndex: active ? 5 : 1
-      }}
-      transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
-    >
-      <div className="reels-exit-orbit" aria-hidden="true" />
-      <div className="reels-card-copy">
-        <span>NEXT DESTINATION</span>
-        <h3>연락 페이지로 이동</h3>
-        <p>이 기록의 끝에서 다음 연결 지점으로 이동합니다.</p>
-        <strong>{active ? "TAP TO ENTER" : "CENTER ME"}</strong>
-      </div>
-    </motion.article>
-  );
+function clickCardOnKey(event: ReactKeyboardEvent<HTMLElement>, onActivate: () => void) {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    onActivate();
+  }
 }
 
 function ReelsCard({
@@ -799,7 +774,10 @@ function ReelsCard({
       ref={register}
       layoutId={`portfolio-card-${item.id}`}
       className={`reels-card magnetic ${active ? "active" : ""}`}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(event) => clickCardOnKey(event, handleClick)}
       animate={{
         scale: active ? 1.11 : 0.92,
         opacity: active ? 1 : 0.58,
@@ -840,7 +818,13 @@ function ProjectNewsCard({
   const alt = item.images[0]?.altKo ?? koText(item, "title");
 
   return (
-    <article className={`project-news-card ${large ? "large" : ""}`}>
+    <article
+      className={`project-news-card magnetic ${large ? "large" : ""}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(item)}
+      onKeyDown={(event) => clickCardOnKey(event, () => onSelect(item))}
+    >
       <div className="project-news-media">
         {image ? <img src={image} alt={alt} /> : <div className="image-placeholder" />}
       </div>
@@ -849,7 +833,15 @@ function ProjectNewsCard({
         <h3>{koText(item, "title")}</h3>
         <p>{koText(item, "summary")}</p>
         <div className="tag-row">{item.tags.slice(0, large ? 5 : 3).map((tag) => <span key={tag}>{tag}</span>)}</div>
-        <button className="primary-cta magnetic" onClick={() => onSelect(item)}>자세히 보기</button>
+        <button
+          className="primary-cta magnetic"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect(item);
+          }}
+        >
+          자세히 보기
+        </button>
       </div>
     </article>
   );
