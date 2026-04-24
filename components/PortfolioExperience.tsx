@@ -56,6 +56,22 @@ function detailEntries(item: PortfolioItem) {
   });
 }
 
+function splitAwardTitle(title: string) {
+  const separators = [" · ", " - ", " `"];
+  for (const separator of separators) {
+    const index = title.lastIndexOf(separator);
+    if (index > 0) {
+      const name = title.slice(0, index).replace(/`/g, "").trim();
+      const prize = title.slice(index + separator.length).replace(/`/g, "").trim();
+      if (prize && /(상|표창|입선|대상|최우수|우수|장려)/.test(prize)) {
+        return { name, prize };
+      }
+    }
+  }
+
+  return { name: title, prize: "" };
+}
+
 function sortFeatured(items: PortfolioItem[]) {
   return [...items].sort((a, b) => a.featuredRank - b.featuredRank || (b.year ?? "").localeCompare(a.year ?? ""));
 }
@@ -253,7 +269,7 @@ export function PortfolioExperience({ initialContent }: Props) {
             navigateToSection("contact");
             return;
           }
-          activeTrack.scrollBy({ left: Math.min(delta, window.innerWidth * 0.62), behavior: "smooth" });
+          activeTrack.scrollBy({ left: Math.min(Math.max(Math.abs(delta), 260), window.innerWidth * 0.62), behavior: "smooth" });
           return;
         }
 
@@ -262,7 +278,7 @@ export function PortfolioExperience({ initialContent }: Props) {
             navigateToSection("crossroads");
             return;
           }
-          activeTrack.scrollBy({ left: Math.max(delta, -window.innerWidth * 0.62), behavior: "smooth" });
+          activeTrack.scrollBy({ left: -Math.min(Math.max(Math.abs(delta), 260), window.innerWidth * 0.62), behavior: "smooth" });
           return;
         }
 
@@ -688,21 +704,7 @@ function AwardsYearBoard({
         <div className="award-list-stack">
           {activeBucket?.items.length ? (
             activeBucket.items.map((item, index) => (
-              <button key={item.id} className="award-record-card magnetic" onClick={() => onSelect(item)}>
-                <div className="award-record-index">
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <small>{item.year}</small>
-                </div>
-                <div className="award-record-main">
-                  <strong>{koText(item, "title")}</strong>
-                  <p>{koText(item, "summary")}</p>
-                </div>
-                <div className="award-record-tags">
-                  {item.tags.slice(0, 4).map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              </button>
+              <AwardRecordCard key={item.id} item={item} index={index} onSelect={onSelect} />
             ))
           ) : (
             <div className="award-empty-card">
@@ -713,6 +715,31 @@ function AwardsYearBoard({
         </div>
       </section>
     </div>
+  );
+}
+
+function AwardRecordCard({ item, index, onSelect }: { item: PortfolioItem; index: number; onSelect: (item: PortfolioItem) => void }) {
+  const awardTitle = splitAwardTitle(koText(item, "title"));
+
+  return (
+    <button className="award-record-card magnetic" onClick={() => onSelect(item)}>
+      <div className="award-record-index">
+        <span>{String(index + 1).padStart(2, "0")}</span>
+        <small>{item.year}</small>
+      </div>
+      <div className="award-record-main">
+        <strong>
+          <span className="award-record-name">{awardTitle.name}</span>
+          {awardTitle.prize ? <span className="award-prize-badge">{awardTitle.prize}</span> : null}
+        </strong>
+        <p>{koText(item, "summary")}</p>
+      </div>
+      <div className="award-record-tags">
+        {item.tags.slice(0, 4).map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
+      </div>
+    </button>
   );
 }
 
