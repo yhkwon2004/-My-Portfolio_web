@@ -237,7 +237,6 @@ export function PortfolioExperience({ initialContent }: Props) {
 
           if (delta > 0 && atEnd) {
             event.preventDefault();
-            navigateToSection("contact");
             return;
           }
 
@@ -266,7 +265,6 @@ export function PortfolioExperience({ initialContent }: Props) {
 
         if (delta > 0) {
           if (atEnd) {
-            navigateToSection("contact");
             return;
           }
           activeTrack.scrollBy({ left: Math.min(Math.max(Math.abs(delta), 260), window.innerWidth * 0.62), behavior: "smooth" });
@@ -310,7 +308,7 @@ export function PortfolioExperience({ initialContent }: Props) {
           if (forward) {
             event.preventDefault();
             if (atEnd) {
-              navigateToSection("contact");
+              return;
             } else {
               track.scrollBy({ left: Math.min(window.innerWidth * 0.62, 860), behavior: "smooth" });
             }
