@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import { AnimatePresence, motion } from "framer-motion";
 import { CursorFollower } from "./CursorFollower";
 import { PolygonBackdrop } from "./PolygonBackdrop";
-import { SplineEntrance } from "./SplineEntrance";
 import type { PortfolioContent, PortfolioItem } from "@/lib/types";
 
 type Props = {
@@ -110,7 +109,6 @@ export function PortfolioExperience({ initialContent }: Props) {
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [projectView, setProjectView] = useState<ProjectView>("carousel");
-  const [entered, setEntered] = useState(false);
   const wheelLockRef = useRef(false);
   const projectTrackRef = useRef<HTMLDivElement | null>(null);
 
@@ -128,15 +126,9 @@ export function PortfolioExperience({ initialContent }: Props) {
   }, [initialContent]);
 
   const setSection = (section: SectionId) => {
-    if (section !== "entrance") setEntered(true);
     setSelected(null);
     setNavOpen(false);
     setActive(sectionIndex(section));
-  };
-
-  const enterJourney = () => {
-    setEntered(true);
-    setSection("intro");
   };
 
   const goBack = () => {
@@ -153,10 +145,7 @@ export function PortfolioExperience({ initialContent }: Props) {
     setSelected(null);
     setActive((value) => {
       const current = sections[value];
-      if (current === "entrance") {
-        setEntered(true);
-        return sectionIndex("intro");
-      }
+      if (current === "entrance") return sectionIndex("intro");
       if (current === "intro") return sectionIndex("resume");
       if (current === "resume") return sectionIndex("crossroads");
       return value;
@@ -282,9 +271,9 @@ export function PortfolioExperience({ initialContent }: Props) {
   };
 
   return (
-    <main className={`experience-shell phase-${phase} ${entered ? "entered" : "pre-entry"}`}>
+    <main className={`experience-shell phase-${phase} entered`}>
       <CursorFollower />
-      <PolygonBackdrop active={entered} />
+      <PolygonBackdrop active />
       <div className="time-layer" aria-hidden="true" />
 
       <header className={`topbar site-nav ${navOpen ? "open" : ""}`}>
@@ -315,22 +304,16 @@ export function PortfolioExperience({ initialContent }: Props) {
 
       <div className="scene-stack">
         <section className={`scene entrance ${active === 0 ? "active" : ""}`}>
-          {!entered ? (
-            <SplineEntrance onEnter={enterJourney} />
-          ) : (
-            <>
-              <div className="hero-copy">
-                <p className="eyebrow">KWON YONGHYUN / CYBER JOURNEY PORTFOLIO</p>
-                <h1 className="gradient-title">{content.settings.ownerKo}</h1>
-                <h2>{content.settings.headlineKo}</h2>
-                <p className="quote">"{content.settings.quoteKo}"</p>
-                <button className="primary-cta magnetic" onClick={() => setSection("intro")}>
-                  START JOURNEY
-                </button>
-              </div>
-              <div className="hud-note">Scroll / Backspace / Top navigation</div>
-            </>
-          )}
+          <div className="hero-copy">
+            <p className="eyebrow">KWON YONGHYUN / CYBER JOURNEY PORTFOLIO</p>
+            <h1 className="gradient-title">{content.settings.ownerKo}</h1>
+            <h2>{content.settings.headlineKo}</h2>
+            <p className="quote">"{content.settings.quoteKo}"</p>
+            <button className="primary-cta magnetic" onClick={() => setSection("intro")}>
+              START JOURNEY
+            </button>
+          </div>
+          <div className="hud-note">Scroll / Backspace / Top navigation</div>
         </section>
 
         <section className={`scene intro ${active === 1 ? "active" : ""}`}>
