@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CursorFollower } from "./CursorFollower";
-import { UnicornBackdrop } from "./UnicornBackdrop";
+import { PolygonBackdrop } from "./PolygonBackdrop";
+import { SplineEntrance } from "./SplineEntrance";
 import type { PortfolioContent, PortfolioItem } from "@/lib/types";
 
 type Props = {
@@ -109,6 +110,7 @@ export function PortfolioExperience({ initialContent }: Props) {
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [projectView, setProjectView] = useState<ProjectView>("carousel");
+  const [entered, setEntered] = useState(false);
   const wheelLockRef = useRef(false);
   const projectTrackRef = useRef<HTMLDivElement | null>(null);
 
@@ -126,9 +128,15 @@ export function PortfolioExperience({ initialContent }: Props) {
   }, [initialContent]);
 
   const setSection = (section: SectionId) => {
+    if (section !== "entrance") setEntered(true);
     setSelected(null);
     setNavOpen(false);
     setActive(sectionIndex(section));
+  };
+
+  const enterJourney = () => {
+    setEntered(true);
+    setSection("intro");
   };
 
   const goBack = () => {
@@ -145,7 +153,10 @@ export function PortfolioExperience({ initialContent }: Props) {
     setSelected(null);
     setActive((value) => {
       const current = sections[value];
-      if (current === "entrance") return sectionIndex("intro");
+      if (current === "entrance") {
+        setEntered(true);
+        return sectionIndex("intro");
+      }
       if (current === "intro") return sectionIndex("resume");
       if (current === "resume") return sectionIndex("crossroads");
       return value;
@@ -271,9 +282,9 @@ export function PortfolioExperience({ initialContent }: Props) {
   };
 
   return (
-    <main className={`experience-shell phase-${phase}`}>
+    <main className={`experience-shell phase-${phase} ${entered ? "entered" : "pre-entry"}`}>
       <CursorFollower />
-      <UnicornBackdrop />
+      <PolygonBackdrop active={entered} />
       <div className="time-layer" aria-hidden="true" />
 
       <header className={`topbar site-nav ${navOpen ? "open" : ""}`}>
@@ -304,16 +315,22 @@ export function PortfolioExperience({ initialContent }: Props) {
 
       <div className="scene-stack">
         <section className={`scene entrance ${active === 0 ? "active" : ""}`}>
-          <div className="hero-copy">
-            <p className="eyebrow">KWON YONGHYUN / CYBER JOURNEY PORTFOLIO</p>
-            <h1 className="gradient-title">{content.settings.ownerKo}</h1>
-            <h2>{content.settings.headlineKo}</h2>
-            <p className="quote">"{content.settings.quoteKo}"</p>
-            <button className="primary-cta magnetic" onClick={() => setSection("intro")}>
-              START JOURNEY
-            </button>
-          </div>
-          <div className="hud-note">Scroll / Backspace / Top navigation</div>
+          {!entered ? (
+            <SplineEntrance onEnter={enterJourney} />
+          ) : (
+            <>
+              <div className="hero-copy">
+                <p className="eyebrow">KWON YONGHYUN / CYBER JOURNEY PORTFOLIO</p>
+                <h1 className="gradient-title">{content.settings.ownerKo}</h1>
+                <h2>{content.settings.headlineKo}</h2>
+                <p className="quote">"{content.settings.quoteKo}"</p>
+                <button className="primary-cta magnetic" onClick={() => setSection("intro")}>
+                  START JOURNEY
+                </button>
+              </div>
+              <div className="hud-note">Scroll / Backspace / Top navigation</div>
+            </>
+          )}
         </section>
 
         <section className={`scene intro ${active === 1 ? "active" : ""}`}>
@@ -700,12 +717,31 @@ function ShowcaseDeck({
             <motion.div
               key={activeItem.id}
               className="project-background-stage"
-              initial={{ opacity: 0, scale: 1.06 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
+              initial={{
+                opacity: 0,
+                scale: 0.42,
+                x: 250,
+                y: 170,
+                clipPath: "inset(42% 5% 8% 58% round 26px)"
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x: 0,
+                y: 0,
+                clipPath: "inset(0% 0% 0% 0% round 32px)"
+              }}
+              exit={{ opacity: 0, scale: 1.08, filter: "blur(8px)" }}
+              transition={{ duration: 0.68, ease: [0.2, 0.8, 0.2, 1] }}
             >
-              <img src={resolveProjectVisual(activeItem)} alt={koText(activeItem, "title")} />
+              <motion.img
+                src={resolveProjectVisual(activeItem)}
+                alt={koText(activeItem, "title")}
+                initial={{ scale: 1.14 }}
+                animate={{ scale: 1.02 }}
+                exit={{ scale: 1.12 }}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              />
               <div className="project-background-overlay" />
             </motion.div>
           </AnimatePresence>
@@ -716,6 +752,9 @@ function ShowcaseDeck({
             </span>
             <strong>{koText(activeItem, "title")}</strong>
             <p>{koText(activeItem, "summary")}</p>
+            <div className="tag-row project-story-tags">
+              {activeItem.tags.slice(0, 5).map((tag) => <span key={tag}>{tag}</span>)}
+            </div>
             <div className="project-story-actions">
               <button className="primary-cta magnetic" onClick={() => onSelect(activeItem)}>
                 자세히 보기
@@ -724,7 +763,7 @@ function ShowcaseDeck({
           </aside>
 
           <div className="project-cards-dock">
-            <div className={`showcase-track project-card-strip`} ref={trackRef}>
+            <div className={`showcase-track project-card-strip`} ref={trackRef} aria-label="프로젝트 카드 목록">
               {items.map((item, index) => (
                 <CompactProjectCard
                   key={item.id}
@@ -873,15 +912,16 @@ function CompactProjectCard({
     <motion.button
       ref={register}
       type="button"
+      layoutId={`portfolio-card-${item.id}`}
       className={`project-rail-card magnetic ${active ? "active" : ""}`}
       onClick={handleClick}
       onKeyDown={(event) => clickCardOnKey(event, handleClick)}
-      animate={{ opacity: active ? 1 : 0.56, y: active ? -10 : 0 }}
+      animate={{ opacity: active ? 1 : 0.54, y: active ? -12 : 4, scale: active ? 1.04 : 0.94 }}
       transition={{ type: "spring", stiffness: 240, damping: 24, mass: 0.8 }}
     >
-      <div className="project-rail-media">
+      <motion.div className="project-rail-media" layoutId={`portfolio-card-media-${item.id}`}>
         <img src={image} alt={koText(item, "title")} />
-      </div>
+      </motion.div>
       <div className="project-rail-copy">
         <span>{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
         <strong>{koText(item, "title")}</strong>
@@ -1003,6 +1043,13 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
           <h2>{koText(item, "title")}</h2>
           <p>{koText(item, "summary")}</p>
           <div className="tag-row">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+          {item.images.length > 1 ? (
+            <div className="modal-gallery expanded-gallery">
+              {item.images.slice(1).map((galleryImage) => (
+                <img key={galleryImage.url} src={galleryImage.url} alt={galleryImage.altKo} />
+              ))}
+            </div>
+          ) : null}
           {hasDeepInfo ? (
             <details className="detail-disclosure" open={item.type === "project"}>
               <summary>자세히 보기</summary>

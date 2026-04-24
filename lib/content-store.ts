@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
-import { defaultContent } from "./default-content";
+import { seedContent } from "./seed-content";
 import type { PortfolioContent } from "./types";
 
 const CONTENT_KEY = "portfolio:kwon-yonghyun:content:v1";
@@ -67,21 +67,21 @@ function redisClient() {
 
 function mergeWithDefaults(content: PortfolioContent): PortfolioContent {
   const storedItems = new Map(content.items.map((item) => [item.id, item]));
-  const defaultIds = new Set(defaultContent.items.map((item) => item.id));
+  const defaultIds = new Set(seedContent.items.map((item) => item.id));
 
   const items = [
-    ...defaultContent.items.map((item) => storedItems.get(item.id) ?? item),
+    ...seedContent.items.map((item) => storedItems.get(item.id) ?? item),
     ...content.items.filter((item) => !defaultIds.has(item.id))
   ];
 
   return contentSchema.parse({
-    ...defaultContent,
+    ...seedContent,
     ...content,
     settings: {
-      ...defaultContent.settings,
+      ...seedContent.settings,
       ...content.settings,
       backgrounds: {
-        ...defaultContent.settings.backgrounds,
+        ...seedContent.settings.backgrounds,
         ...content.settings.backgrounds
       }
     },
@@ -100,7 +100,7 @@ export async function getContent(): Promise<PortfolioContent> {
   }
 
   const cache = globalThis as GlobalCache;
-  return cache.__portfolioContent ? mergeWithDefaults(cache.__portfolioContent) : defaultContent;
+  return cache.__portfolioContent ? mergeWithDefaults(cache.__portfolioContent) : seedContent;
 }
 
 export async function saveContent(content: PortfolioContent): Promise<PortfolioContent> {

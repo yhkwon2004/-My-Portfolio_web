@@ -13,6 +13,258 @@
   --shadow: rgba(0, 0, 0, 0.38);
 }
 
+.polygon-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 760ms ease;
+}
+
+.polygon-backdrop.active {
+  opacity: 0.88;
+}
+
+.spline-entrance {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(114, 244, 255, 0.14), transparent 32%),
+    linear-gradient(145deg, rgba(255, 108, 207, 0.13), rgba(5, 7, 13, 0.88) 58%);
+}
+
+.spline-entrance canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.spline-entrance.failed::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(115deg, transparent 0 28%, rgba(114, 244, 255, 0.18) 45%, transparent 62%),
+    repeating-linear-gradient(120deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 44px);
+}
+
+.spline-enter-zone {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(2rem, 8vh, 5rem);
+  z-index: 3;
+  display: grid;
+  gap: 0.3rem;
+  min-width: min(320px, calc(100vw - 48px));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(114, 244, 255, 0.18), rgba(255, 108, 207, 0.14)),
+    rgba(5, 8, 16, 0.58);
+  color: #fff;
+  padding: 0.9rem 1.2rem;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(20px) saturate(140%);
+  transform: translateX(-50%);
+}
+
+.spline-enter-zone span {
+  color: var(--cyan);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.spline-enter-zone strong {
+  font-size: 1.05rem;
+}
+
+.project-stage {
+  width: min(1540px, calc(100vw - 64px));
+  height: min(860px, calc(100vh - 118px));
+  min-height: min(760px, calc(100vh - 118px));
+  align-content: stretch;
+}
+
+.project-stage.carousel-mode .showcase-stage.compact {
+  height: calc(100% - 104px);
+}
+
+.project-cinematic-shell {
+  min-height: min(640px, calc(100vh - 250px));
+  isolation: isolate;
+}
+
+.project-background-stage {
+  transform-origin: 84% 82%;
+  will-change: transform, opacity, clip-path, filter;
+}
+
+.project-background-stage::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 68% 48%, rgba(114, 244, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 30% 64%, rgba(255, 108, 207, 0.14), transparent 32%);
+  mix-blend-mode: screen;
+}
+
+.project-background-stage img {
+  object-position: center;
+  will-change: transform;
+}
+
+.project-story-panel {
+  width: min(470px, 38vw);
+  margin: clamp(1rem, 3vh, 1.8rem) 0 0 clamp(1rem, 2vw, 1.6rem);
+}
+
+.project-story-panel strong {
+  font-size: clamp(1.45rem, 2.5vw, 2.45rem);
+}
+
+.project-story-tags {
+  margin-top: 0.12rem;
+}
+
+.project-cards-dock {
+  right: clamp(0.6rem, 2vw, 1.4rem);
+  bottom: clamp(0.6rem, 2vh, 1.2rem);
+  width: min(620px, 50vw);
+}
+
+.project-card-strip {
+  gap: 0.62rem;
+  padding: 0.8rem 0.35rem 0.3rem;
+}
+
+.project-rail-card {
+  flex-basis: 142px;
+  border-radius: 18px;
+  padding: 0.52rem;
+  transform-origin: center bottom;
+}
+
+.project-rail-card.active {
+  border-color: rgba(114, 244, 255, 0.72);
+  background:
+    linear-gradient(145deg, rgba(114, 244, 255, 0.18), transparent 42%),
+    rgba(8, 12, 22, 0.74);
+}
+
+.project-rail-media {
+  height: 82px;
+  border-radius: 14px;
+}
+
+.project-rail-copy strong {
+  display: -webkit-box;
+  min-height: 2.48em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.82rem;
+}
+
+.project-controls.floating {
+  justify-content: flex-end;
+}
+
+.expanded-card {
+  width: min(1320px, 96vw);
+  height: min(840px, 92vh);
+}
+
+.expanded-gallery {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-height: 190px;
+  overflow: hidden;
+}
+
+.expanded-gallery img {
+  height: 100px;
+  max-height: none;
+}
+
+@media (max-width: 760px) {
+  .spline-enter-zone {
+    bottom: 1.35rem;
+    min-width: calc(100vw - 36px);
+  }
+
+  .project-stage {
+    width: 94vw;
+    height: calc(100vh - 104px);
+    min-height: calc(100vh - 104px);
+  }
+
+  .project-stage.carousel-mode .showcase-stage.compact {
+    height: calc(100% - 118px);
+  }
+
+  .project-cinematic-shell {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .project-story-panel {
+    width: 100%;
+    margin: 0;
+    padding: 0.9rem;
+  }
+
+  .project-story-panel strong {
+    font-size: 1.35rem;
+  }
+
+  .project-story-panel p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .project-cards-dock {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    padding: 0;
+    align-self: end;
+  }
+
+  .project-rail-card {
+    flex-basis: 128px;
+  }
+
+  .project-rail-media {
+    height: 76px;
+  }
+
+  .expanded-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 150px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .project-background-stage {
+    transform-origin: center;
+  }
+
+  .polygon-backdrop {
+    opacity: 0.46;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -3093,5 +3345,329 @@ code {
     justify-content: start;
     max-height: 42vh;
     overflow: auto;
+  }
+}
+
+/* Final Spline and cinematic project overrides */
+.experience-shell.pre-entry .topbar,
+.experience-shell.pre-entry .prev-route,
+.experience-shell.pre-entry .time-layer,
+.experience-shell.pre-entry .cursor-core,
+.experience-shell.pre-entry .cursor-halo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.polygon-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.polygon-backdrop.active {
+  opacity: 0.72;
+}
+
+.spline-entrance {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(116, 244, 255, 0.16), transparent 38%),
+    linear-gradient(135deg, #03050a 0%, #090914 58%, #15071b 100%);
+}
+
+.spline-entrance canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.spline-touch-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spline-enter-zone {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.5rem, 5vh, 4rem);
+  z-index: 2;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(340px, 78vw);
+  padding: 1rem 1.35rem;
+  border: 1px solid rgba(128, 244, 255, 0.48);
+  border-radius: 999px;
+  color: #eef9ff;
+  background: rgba(4, 8, 17, 0.48);
+  box-shadow: 0 0 34px rgba(86, 230, 255, 0.22), inset 0 0 22px rgba(255, 115, 210, 0.12);
+  backdrop-filter: blur(18px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.spline-enter-zone span {
+  font-size: 0.66rem;
+  color: #7ef4ff;
+  letter-spacing: 0.22em;
+}
+
+.spline-enter-zone strong {
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  font-weight: 800;
+}
+
+.spline-entrance.failed::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  background:
+    conic-gradient(from 120deg at 50% 50%, rgba(126, 244, 255, 0.24), rgba(255, 108, 207, 0.18), rgba(255, 218, 123, 0.13), rgba(126, 244, 255, 0.24)),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1), transparent 36%);
+  filter: blur(12px);
+  animation: orbitGlow 12s linear infinite;
+}
+
+.project-stage.carousel-mode {
+  width: min(92vw, 1320px);
+  height: min(760px, calc(100vh - 124px));
+  min-height: 560px;
+  padding-top: 0;
+}
+
+.project-stage.carousel-mode .showcase-stage.compact,
+.project-reel-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.project-reel-stage .showcase-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.project-cinematic-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.72fr) minmax(420px, 1.28fr);
+  align-items: end;
+  gap: clamp(1rem, 3vw, 2.2rem);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 34px;
+  border: 1px solid rgba(126, 244, 255, 0.18);
+  background: rgba(4, 7, 14, 0.28);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.project-background-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  transform-origin: 82% 76%;
+  background: #07101c;
+}
+
+.project-background-stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.08) contrast(1.05);
+}
+
+.project-background-stage::after,
+.project-background-overlay {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 7, 13, 0.9) 0%, rgba(7, 11, 20, 0.72) 34%, rgba(7, 11, 20, 0.18) 64%, rgba(5, 7, 13, 0.54) 100%),
+    linear-gradient(0deg, rgba(5, 7, 13, 0.7) 0%, transparent 46%);
+}
+
+.project-story-panel {
+  position: relative;
+  z-index: 3;
+  width: min(420px, 100%);
+  margin: 0 0 clamp(1rem, 3vh, 2.2rem) clamp(1rem, 3vw, 2.2rem);
+  padding: clamp(1.15rem, 3vw, 2rem);
+  border: 1px solid rgba(126, 244, 255, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(10, 18, 34, 0.82), rgba(40, 13, 47, 0.58));
+  backdrop-filter: blur(20px);
+}
+
+.project-story-panel > span {
+  color: #ffe98a;
+  font: 800 0.72rem/1.2 "Courier New", monospace;
+  letter-spacing: 0.14em;
+}
+
+.project-story-panel strong {
+  display: block;
+  margin-top: 0.8rem;
+  color: #fff;
+  font-size: clamp(1.65rem, 4vw, 3.3rem);
+  line-height: 1.05;
+}
+
+.project-story-panel p {
+  margin: 1rem 0 0;
+  color: rgba(239, 247, 255, 0.78);
+  font-size: clamp(0.95rem, 1.2vw, 1.12rem);
+  line-height: 1.65;
+}
+
+.project-story-tags {
+  margin-top: 1rem;
+}
+
+.project-cards-dock {
+  position: relative;
+  z-index: 4;
+  align-self: end;
+  min-width: 0;
+  padding: 0 clamp(1rem, 2.4vw, 2rem) clamp(1rem, 3vh, 2rem) 0;
+}
+
+.project-card-strip {
+  display: flex;
+  align-items: end;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 1.2rem 0.15rem 0.9rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.project-rail-card {
+  flex: 0 0 clamp(112px, 12vw, 170px);
+  display: grid;
+  gap: 0.65rem;
+  min-height: clamp(136px, 18vh, 190px);
+  padding: 0.68rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(8, 14, 27, 0.52);
+  color: #fff;
+  text-align: left;
+  scroll-snap-align: center;
+  backdrop-filter: blur(18px);
+}
+
+.project-rail-card.active {
+  border-color: rgba(126, 244, 255, 0.72);
+  box-shadow: 0 0 0 1px rgba(126, 244, 255, 0.18), 0 20px 48px rgba(62, 206, 255, 0.22);
+}
+
+.project-rail-media {
+  height: clamp(62px, 10vh, 92px);
+  overflow: hidden;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.project-rail-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.project-rail-copy span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #ffe98a;
+  font: 800 0.62rem/1.2 "Courier New", monospace;
+  letter-spacing: 0.12em;
+}
+
+.project-rail-copy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.78rem, 1vw, 0.95rem);
+  line-height: 1.28;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.project-controls.floating {
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+
+.expanded-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.expanded-gallery img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 860px) {
+  .project-stage.carousel-mode {
+    width: 94vw;
+    height: calc(100vh - 112px);
+    min-height: 620px;
+  }
+
+  .project-cinematic-shell {
+    grid-template-columns: 1fr;
+    align-content: end;
+  }
+
+  .project-story-panel {
+    width: auto;
+    margin: 5.2rem 1rem 0;
+  }
+
+  .project-cards-dock {
+    padding: 0 1rem 1rem;
+  }
+
+  .project-rail-card {
+    flex-basis: min(42vw, 152px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .polygon-backdrop.active {
+    opacity: 0.42;
+  }
+
+  .spline-entrance.failed::before {
+    animation: none;
   }
 }
