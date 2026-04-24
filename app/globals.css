@@ -4431,3 +4431,114 @@ code {
     grid-template-rows: minmax(280px, 0.9fr) minmax(0, 1fr);
   }
 }
+
+/* UI alignment audit: keep content groups centered inside full-screen scenes */
+.scene.active {
+  justify-items: center;
+}
+
+.content-panel,
+.intro-panel,
+.resume-fullscreen,
+.featured-project-shell,
+.awards-toggle-board,
+.crossroad-grid,
+.contact-deck,
+.project-stage {
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.scene.intro.active,
+.scene.resume.active,
+.scene.awards.active,
+.scene.crossroads.active,
+.scene.contact.active {
+  justify-content: center;
+  justify-items: center;
+}
+
+.scene.intro.active,
+.scene.awards.active,
+.scene.contact.active {
+  padding-left: clamp(1rem, 3vw, 2.5rem);
+  padding-right: clamp(1rem, 3vw, 2.5rem);
+}
+
+.scene.intro.active .intro-panel {
+  justify-self: center;
+}
+
+.scene.awards.active .awards-toggle-board {
+  width: min(1380px, calc(100vw - clamp(2rem, 6vw, 5rem)));
+  justify-self: center;
+}
+
+.scene.awards.active .award-list-board,
+.scene.awards.active .award-list-stack {
+  width: 100%;
+}
+
+.scene.projects.active {
+  display: block;
+}
+
+.scene.projects .project-stage.carousel-mode {
+  left: 0;
+  right: 0;
+  margin: 0;
+}
+
+.scene.projects .project-stage-header {
+  left: 50%;
+  right: auto;
+  width: min(1480px, calc(100vw - clamp(2rem, 5vw, 4.5rem)));
+  transform: translateX(-50%);
+}
+
+.scene.projects .project-stage-header .panel-title {
+  max-width: min(48vw, 620px);
+}
+
+.scene.projects .project-story-panel {
+  margin-left: max(clamp(1rem, 2.6vw, 2.5rem), calc((100vw - 1480px) / 2 + 2rem));
+}
+
+.scene.projects .project-cards-dock {
+  right: max(clamp(1rem, 2.4vw, 2rem), calc((100vw - 1480px) / 2 + 2rem));
+}
+
+.scene.projects .project-controls.floating {
+  right: 0;
+}
+
+@media (max-width: 980px) {
+  .scene.projects .project-stage-header {
+    width: calc(100vw - 1.6rem);
+  }
+
+  .scene.projects .project-stage-header .panel-title {
+    max-width: 52vw;
+  }
+
+  .scene.projects .project-story-panel {
+    margin-left: 0.8rem;
+  }
+
+  .scene.projects .project-cards-dock {
+    right: 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .scene.projects .project-stage-header {
+    left: 0.8rem;
+    width: calc(100vw - 1.6rem);
+    transform: none;
+  }
+
+  .scene.projects .project-stage-header .panel-title {
+    max-width: 100%;
+  }
+}
