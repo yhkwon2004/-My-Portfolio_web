@@ -153,6 +153,15 @@ export function PortfolioExperience({ initialContent }: Props) {
   };
 
   useEffect(() => {
+    const navigateToSection = (section: SectionId) => {
+      if (wheelLockRef.current || selected) return;
+      wheelLockRef.current = true;
+      setSection(section);
+      window.setTimeout(() => {
+        wheelLockRef.current = false;
+      }, 920);
+    };
+
     const navigate = (direction: 1 | -1) => {
       if (wheelLockRef.current || selected) return;
       wheelLockRef.current = true;
@@ -170,7 +179,6 @@ export function PortfolioExperience({ initialContent }: Props) {
       const phase = sections[active];
       const target = event.target instanceof Element ? event.target : null;
       const track = target?.closest<HTMLElement>(".showcase-track");
-      const grid = target?.closest<HTMLElement>(".project-news-grid");
 
       if (selected) {
         event.preventDefault();
@@ -178,35 +186,86 @@ export function PortfolioExperience({ initialContent }: Props) {
       }
 
       if (phase === "awards") {
+        const scrollRoot = document.querySelector<HTMLElement>(".scene.awards.active");
+        const delta = event.deltaY;
+        if (!scrollRoot || Math.abs(delta) < 18) return;
+
+        const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;
+        const atEnd = scrollRoot.scrollTop >= maxScroll - 8;
+        const atStart = scrollRoot.scrollTop <= 8;
+
+        if (delta > 0 && atEnd) {
+          event.preventDefault();
+          navigateToSection("projects");
+          return;
+        }
+
+        if (delta < 0 && atStart) {
+          event.preventDefault();
+          navigateToSection("crossroads");
+          return;
+        }
+
         return;
       }
 
       if (phase === "projects") {
         if (projectView === "grid") {
-          return;
-        }
-        if (track) {
-          event.preventDefault();
-          const delta = event.deltaX + event.deltaY;
-          const maxScroll = track.scrollWidth - track.clientWidth;
-          const atEnd = track.scrollLeft >= maxScroll - 8;
-          const atStart = track.scrollLeft <= 8;
+          const scrollRoot = document.querySelector<HTMLElement>(".scene.projects.active.grid-view");
+          const delta = event.deltaY;
+          if (!scrollRoot || Math.abs(delta) < 18) return;
+
+          const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;
+          const atEnd = scrollRoot.scrollTop >= maxScroll - 8;
+          const atStart = scrollRoot.scrollTop <= 8;
 
           if (delta > 0 && atEnd) {
+            event.preventDefault();
+            navigateToSection("contact");
             return;
           }
 
           if (delta < 0 && atStart) {
+            event.preventDefault();
+            navigateToSection("crossroads");
             return;
           }
 
-          track.scrollBy({ left: delta, behavior: "smooth" });
           return;
         }
-        if (grid) {
+
+        const activeTrack = track ?? projectTrackRef.current;
+        if (!activeTrack) {
+          event.preventDefault();
           return;
         }
+
         event.preventDefault();
+        const delta = event.deltaX || event.deltaY;
+        if (Math.abs(delta) < 12) return;
+
+        const maxScroll = activeTrack.scrollWidth - activeTrack.clientWidth;
+        const atEnd = activeTrack.scrollLeft >= maxScroll - 8;
+        const atStart = activeTrack.scrollLeft <= 8;
+
+        if (delta > 0) {
+          if (atEnd) {
+            navigateToSection("contact");
+            return;
+          }
+          activeTrack.scrollBy({ left: Math.min(delta, window.innerWidth * 0.62), behavior: "smooth" });
+          return;
+        }
+
+        if (delta < 0) {
+          if (atStart) {
+            navigateToSection("crossroads");
+            return;
+          }
+          activeTrack.scrollBy({ left: Math.max(delta, -window.innerWidth * 0.62), behavior: "smooth" });
+          return;
+        }
+
         return;
       }
 
@@ -223,12 +282,52 @@ export function PortfolioExperience({ initialContent }: Props) {
         if (event.key === "Escape") setSelected(null);
         return;
       }
-      if ((phase === "awards" || phase === "projects") && ["ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
-        if (phase === "projects" && projectView === "grid") {
+      if (phase === "projects" && projectView === "carousel" && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
+        const track = projectTrackRef.current;
+        if (track) {
+          const maxScroll = track.scrollWidth - track.clientWidth;
+          const atEnd = track.scrollLeft >= maxScroll - 8;
+          const atStart = track.scrollLeft <= 8;
+          const forward = ["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key);
+          const backward = ["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(event.key);
+
+          if (forward) {
+            event.preventDefault();
+            if (atEnd) {
+              navigateToSection("contact");
+            } else {
+              track.scrollBy({ left: Math.min(window.innerWidth * 0.62, 860), behavior: "smooth" });
+            }
+            return;
+          }
+
+          if (backward) {
+            event.preventDefault();
+            if (atStart) {
+              navigateToSection("crossroads");
+            } else {
+              track.scrollBy({ left: -Math.min(window.innerWidth * 0.62, 860), behavior: "smooth" });
+            }
+            return;
+          }
+        }
+      }
+      if (phase === "awards" && ["ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
+        const scrollRoot = document.querySelector<HTMLElement>(".scene.awards.active");
+        if (!scrollRoot) return;
+        const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;
+        const atEnd = scrollRoot.scrollTop >= maxScroll - 8;
+        const atStart = scrollRoot.scrollTop <= 8;
+        if (["ArrowDown", "PageDown", " "].includes(event.key) && atEnd) {
+          event.preventDefault();
+          navigateToSection("projects");
           return;
         }
-        event.preventDefault();
-        return;
+        if (["ArrowUp", "PageUp", "Backspace"].includes(event.key) && atStart) {
+          event.preventDefault();
+          navigateToSection("crossroads");
+          return;
+        }
       }
       if (["ArrowDown", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
