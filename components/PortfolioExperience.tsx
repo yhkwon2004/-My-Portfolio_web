@@ -1,16 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CursorFollower } from "./CursorFollower";
 import { PolygonBackdrop } from "./PolygonBackdrop";
-import type { PortfolioContent, PortfolioItem } from "@/lib/types";
+import type { PortfolioContent, PortfolioImage, PortfolioItem } from "@/lib/types";
 
 type Props = {
   initialContent: PortfolioContent;
 };
 
-type ProjectView = "carousel" | "grid";
+type ProjectView = "carousel";
 
 const sections = ["entrance", "intro", "resume", "crossroads", "awards", "projects", "contact"] as const;
 type SectionId = (typeof sections)[number];
@@ -184,15 +192,6 @@ export function PortfolioExperience({ initialContent }: Props) {
   };
 
   useEffect(() => {
-    const navigateToSection = (section: SectionId) => {
-      if (wheelLockRef.current || selected) return;
-      wheelLockRef.current = true;
-      setSection(section);
-      window.setTimeout(() => {
-        wheelLockRef.current = false;
-      }, 920);
-    };
-
     const navigate = (direction: 1 | -1) => {
       if (wheelLockRef.current || selected) return;
       wheelLockRef.current = true;
@@ -227,13 +226,11 @@ export function PortfolioExperience({ initialContent }: Props) {
 
         if (delta > 0 && atEnd) {
           event.preventDefault();
-          navigateToSection("projects");
           return;
         }
 
         if (delta < 0 && atStart) {
           event.preventDefault();
-          navigateToSection("crossroads");
           return;
         }
 
@@ -241,29 +238,6 @@ export function PortfolioExperience({ initialContent }: Props) {
       }
 
       if (phase === "projects") {
-        if (projectView === "grid") {
-          const scrollRoot = document.querySelector<HTMLElement>(".scene.projects.active.grid-view");
-          const delta = event.deltaY;
-          if (!scrollRoot || Math.abs(delta) < 18) return;
-
-          const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;
-          const atEnd = scrollRoot.scrollTop >= maxScroll - 8;
-          const atStart = scrollRoot.scrollTop <= 8;
-
-          if (delta > 0 && atEnd) {
-            event.preventDefault();
-            return;
-          }
-
-          if (delta < 0 && atStart) {
-            event.preventDefault();
-            navigateToSection("crossroads");
-            return;
-          }
-
-          return;
-        }
-
         const activeTrack = track ?? projectTrackRef.current;
         if (!activeTrack) {
           event.preventDefault();
@@ -288,7 +262,6 @@ export function PortfolioExperience({ initialContent }: Props) {
 
         if (delta < 0) {
           if (atStart) {
-            navigateToSection("crossroads");
             return;
           }
           activeTrack.scrollBy({ left: -Math.min(Math.max(Math.abs(delta), 260), window.innerWidth * 0.62), behavior: "smooth" });
@@ -333,7 +306,7 @@ export function PortfolioExperience({ initialContent }: Props) {
           if (backward) {
             event.preventDefault();
             if (atStart) {
-              navigateToSection("crossroads");
+              return;
             } else {
               track.scrollBy({ left: -Math.min(window.innerWidth * 0.62, 860), behavior: "smooth" });
             }
@@ -349,12 +322,10 @@ export function PortfolioExperience({ initialContent }: Props) {
         const atStart = scrollRoot.scrollTop <= 8;
         if (["ArrowDown", "PageDown", " "].includes(event.key) && atEnd) {
           event.preventDefault();
-          navigateToSection("projects");
           return;
         }
         if (["ArrowUp", "PageUp", "Backspace"].includes(event.key) && atStart) {
           event.preventDefault();
-          navigateToSection("crossroads");
           return;
         }
       }
@@ -535,9 +506,9 @@ export function PortfolioExperience({ initialContent }: Props) {
           <AwardsYearBoard buckets={awardBuckets} onSelect={setSelected} />
         </section>
 
-        <section className={`scene projects ${active === 5 ? "active" : ""} ${projectView === "grid" ? "grid-view" : ""}`}>
+        <section className={`scene projects ${active === 5 ? "active" : ""}`}>
           <BackArrow onClick={() => setSection("crossroads")} />
-          <div className={`project-stage ${projectView === "grid" ? "grid-mode" : "carousel-mode"}`}>
+          <div className="project-stage carousel-mode">
             <div className="project-stage-header">
               <div>
                 <p className="eyebrow">PROJECT SHOWCASE</p>
@@ -547,31 +518,20 @@ export function PortfolioExperience({ initialContent }: Props) {
                 <button className={projectView === "carousel" ? "active" : ""} onClick={() => setProjectView("carousel")}>
                   CAROUSEL
                 </button>
-                <button className={projectView === "grid" ? "active" : ""} onClick={() => setProjectView("grid")}>
-                  ALL CARDS
-                </button>
               </div>
             </div>
 
-            {projectView === "carousel" ? (
-              <ShowcaseDeck
-                compact
-                variant="project"
-                eyebrow="DRAG TO EXPLORE"
-                title=""
-                items={projects}
-                trackRef={projectTrackRef}
-                onSelect={setSelected}
-                onPrev={() => scrollTrack(projectTrackRef, -1)}
-                onNext={() => scrollTrack(projectTrackRef, 1)}
-              />
-            ) : (
-              <div className="project-news-grid">
-                {projects.map((item, index) => (
-                  <ProjectNewsCard key={item.id} item={item} index={index} total={projects.length} onSelect={setSelected} />
-                ))}
-              </div>
-            )}
+            <ShowcaseDeck
+              compact
+              variant="project"
+              eyebrow="DRAG TO EXPLORE"
+              title=""
+              items={projects}
+              trackRef={projectTrackRef}
+              onSelect={setSelected}
+              onPrev={() => scrollTrack(projectTrackRef, -1)}
+              onNext={() => scrollTrack(projectTrackRef, 1)}
+            />
           </div>
         </section>
 
@@ -733,13 +693,19 @@ function AwardsYearBoard({
 
 function AwardRecordCard({ item, index, onSelect }: { item: PortfolioItem; index: number; onSelect: (item: PortfolioItem) => void }) {
   const awardTitle = splitAwardTitle(koText(item, "title"));
+  const certificate = item.images.find((entry) => entry.role === "certificate") ?? item.images[0];
 
   return (
-    <button className="award-record-card magnetic" onClick={() => onSelect(item)}>
+    <button className={`award-record-card magnetic ${certificate ? "has-certificate" : ""}`} onClick={() => onSelect(item)}>
       <div className="award-record-index">
         <span>{String(index + 1).padStart(2, "0")}</span>
         <small>{item.year}</small>
       </div>
+      {certificate ? (
+        <div className="award-record-certificate" aria-hidden="true">
+          <img src={certificate.url} alt="" />
+        </div>
+      ) : null}
       <div className="award-record-main">
         <strong>
           <span className="award-record-name">{awardTitle.name}</span>
@@ -1115,6 +1081,10 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
   const galleryImages = item.type === "project" ? projectGalleryImages(item) : item.images.filter((entry) => entry.url !== image);
   const videoLinks = item.type === "project" ? projectVideoLinks(item) : [];
   const hasMediaWall = galleryImages.length > 0 || videoLinks.length > 0;
+  const copyRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef({ active: false, startY: 0, scrollTop: 0 });
+  const [copyDragging, setCopyDragging] = useState(false);
+  const [previewImage, setPreviewImage] = useState<PortfolioImage | null>(null);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -1123,6 +1093,33 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
       document.body.style.overflow = previous;
     };
   }, []);
+
+  const handleCopyPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a, summary, img")) return;
+    const node = copyRef.current;
+    if (!node) return;
+    dragStateRef.current = { active: true, startY: event.clientY, scrollTop: node.scrollTop };
+    setCopyDragging(true);
+    node.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleCopyPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const node = copyRef.current;
+    const state = dragStateRef.current;
+    if (!node || !state.active) return;
+    event.preventDefault();
+    node.scrollTop = state.scrollTop - (event.clientY - state.startY);
+  };
+
+  const stopCopyDrag = (event?: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragStateRef.current.active) return;
+    dragStateRef.current.active = false;
+    setCopyDragging(false);
+    if (event && copyRef.current?.hasPointerCapture?.(event.pointerId)) {
+      copyRef.current.releasePointerCapture(event.pointerId);
+    }
+  };
 
   return (
     <motion.div
@@ -1152,11 +1149,16 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
           {image ? <img src={image} alt={alt} /> : <div className="image-placeholder" />}
         </motion.div>
         <motion.div
-          className="expanded-copy"
+          ref={copyRef}
+          className={`expanded-copy ${copyDragging ? "dragging" : ""}`}
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ delay: 0.12, duration: 0.28 }}
+          onPointerDown={handleCopyPointerDown}
+          onPointerMove={handleCopyPointerMove}
+          onPointerUp={stopCopyDrag}
+          onPointerCancel={stopCopyDrag}
         >
           <button
             type="button"
@@ -1180,7 +1182,14 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
               {galleryImages.length ? (
                 <div className="modal-gallery expanded-gallery">
                   {galleryImages.slice(0, 6).map((galleryImage) => (
-                    <img key={galleryImage.url} src={galleryImage.url} alt={galleryImage.altKo} />
+                    <button
+                      type="button"
+                      key={galleryImage.url}
+                      className="gallery-zoom magnetic"
+                      onClick={() => setPreviewImage(galleryImage)}
+                    >
+                      <img src={galleryImage.url} alt={galleryImage.altKo} />
+                    </button>
                   ))}
                 </div>
               ) : null}
@@ -1232,17 +1241,56 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
           ) : null}
         </motion.div>
       </motion.article>
+      <AnimatePresence>
+        {previewImage ? (
+          <motion.div
+            className="image-lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              setPreviewImage(null);
+            }}
+          >
+            <button
+              type="button"
+              className="modal-close image-lightbox-close magnetic"
+              onClick={(event) => {
+                event.stopPropagation();
+                setPreviewImage(null);
+              }}
+            >
+              Close
+            </button>
+            <motion.img
+              src={previewImage.url}
+              alt={previewImage.altKo}
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 190, damping: 22 }}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }
 
 function ContactDeck() {
   const contacts = [
-    { label: "GitHub", value: "깃허브 링크 연결 공간" },
-    { label: "Instagram", value: "인스타그램 링크 연결 공간" },
-    { label: "Email", value: "이메일 주소 연결 공간" },
-    { label: "Naver Profile", value: "네이버 인물정보 링크 공간" },
-    { label: "Blog", value: "블로그 링크 연결 공간" }
+    { label: "GitHub", value: "github.com/yhkwon2004", href: "https://github.com/yhkwon2004" },
+    { label: "Instagram", value: "@dydgus_.0802", href: "https://www.instagram.com/dydgus_.0802/" },
+    { label: "Email", value: "yhkwon2004@gmail.com", href: "mailto:yhkwon2004@gmail.com" },
+    {
+      label: "Naver Profile",
+      value: "네이버 인물정보",
+      href: "https://search.naver.com/search.naver?where=nexearch&sm=tab_etc&mra=bjky&x_csa=%7B%22fromUi%22%3A%22kb%22%7D&pkid=1&os=40980397&qvt=0&query=%EA%B6%8C%EC%9A%A9%ED%98%84"
+    },
+    { label: "Blog", value: "blog.naver.com/procmd", href: "https://blog.naver.com/procmd" }
   ];
 
   return (
@@ -1253,10 +1301,17 @@ function ContactDeck() {
       </article>
       <div className="contact-grid">
         {contacts.map((contact) => (
-          <div key={contact.label} className="contact-card">
+          <a
+            key={contact.label}
+            className="contact-card magnetic"
+            href={contact.href}
+            target={contact.href.startsWith("mailto:") ? undefined : "_blank"}
+            rel={contact.href.startsWith("mailto:") ? undefined : "noreferrer"}
+          >
             <span>{contact.label}</span>
             <strong>{contact.value}</strong>
-          </div>
+            <em>OPEN</em>
+          </a>
         ))}
       </div>
     </div>
