@@ -2565,6 +2565,20 @@ code {
   padding-top: 22px;
 }
 
+.scene.projects.grid-view {
+  display: block;
+  padding: 96px clamp(1rem, 3vw, 2.5rem) 2rem;
+  overflow-y: auto;
+}
+
+.scene.projects.grid-view .project-stage {
+  width: min(1480px, 100%);
+  height: auto;
+  min-height: calc(100vh - 126px);
+  margin: 0 auto;
+  padding-top: 0;
+}
+
 .project-stage-header {
   display: flex;
   align-items: end;
@@ -2693,6 +2707,13 @@ code {
   max-height: calc(100% - 120px);
   overflow: auto;
   padding-right: 0.2rem;
+}
+
+.project-stage.grid-mode .project-news-grid {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  align-content: start;
 }
 
 .project-news-grid .project-news-card {
@@ -2831,6 +2852,10 @@ code {
   .project-stage-header {
     align-items: start;
     flex-direction: column;
+  }
+
+  .scene.projects.grid-view {
+    padding: 84px 14px 1.2rem;
   }
 
   .project-news-card.large {

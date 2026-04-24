@@ -153,6 +153,9 @@ export function PortfolioExperience({ initialContent }: Props) {
       }
 
       if (phase === "projects") {
+        if (projectView === "grid") {
+          return;
+        }
         if (track) {
           event.preventDefault();
           const delta = event.deltaX + event.deltaY;
@@ -199,6 +202,9 @@ export function PortfolioExperience({ initialContent }: Props) {
         return;
       }
       if ((phase === "awards" || phase === "projects") && ["ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
+        if (phase === "projects" && projectView === "grid") {
+          return;
+        }
         event.preventDefault();
         return;
       }
@@ -218,7 +224,7 @@ export function PortfolioExperience({ initialContent }: Props) {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKey);
     };
-  }, [active, selected]);
+  }, [active, selected, projectView]);
 
   const visibleItems = useMemo(() => content.items.filter((item) => item.visible), [content.items]);
   const awards = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "award")), [visibleItems]);
@@ -378,9 +384,9 @@ export function PortfolioExperience({ initialContent }: Props) {
           <AwardsYearBoard buckets={awardBuckets} onSelect={setSelected} />
         </section>
 
-        <section className={`scene projects ${active === 5 ? "active" : ""}`}>
+        <section className={`scene projects ${active === 5 ? "active" : ""} ${projectView === "grid" ? "grid-view" : ""}`}>
           <BackArrow onClick={() => setSection("crossroads")} />
-          <div className="project-stage">
+          <div className={`project-stage ${projectView === "grid" ? "grid-mode" : "carousel-mode"}`}>
             <div className="project-stage-header">
               <div>
                 <p className="eyebrow">PROJECT SHOWCASE</p>
