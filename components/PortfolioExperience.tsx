@@ -69,6 +69,40 @@ function resolveBucketYear(year?: string) {
   return matches?.at(-1) ?? null;
 }
 
+function resolveProjectVisual(item: PortfolioItem) {
+  if (item.images[0]?.url) return item.images[0].url;
+
+  if (item.id.includes("autonomous") || item.id.includes("handmade-car")) {
+    return "/assets/evidence/project-car-1.jpg";
+  }
+
+  if (item.id.includes("upcycle")) {
+    return "/assets/evidence/project-upcycle-1.jpg";
+  }
+
+  if (item.id.includes("kakao") || item.id.includes("farm-app")) {
+    return "/assets/evidence/project-app-screen-2.png";
+  }
+
+  if (item.id.includes("gantts")) {
+    return "/assets/generated/growth-corridor.png";
+  }
+
+  if (item.id.includes("rehab")) {
+    return "/assets/generated/project-lab.png";
+  }
+
+  if (item.tags.includes("AI")) {
+    return "/assets/generated/growth-corridor.png";
+  }
+
+  if (item.tags.includes("Mobility")) {
+    return "/assets/evidence/project-car-1.jpg";
+  }
+
+  return "/assets/generated/project-lab.png";
+}
+
 export function PortfolioExperience({ initialContent }: Props) {
   const [content, setContent] = useState(initialContent);
   const [active, setActive] = useState(0);
@@ -222,7 +256,6 @@ export function PortfolioExperience({ initialContent }: Props) {
   const certifications = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "certification")), [visibleItems]);
   const featuredProjects = projects.filter((item) => item.featured).slice(0, 5);
   const phase = sections[active] as SectionId;
-  const currentLabel = sectionLabels[phase];
   const activeNavTarget = navItems.some((item) => item.target === phase) ? phase : undefined;
   const awardBuckets = useMemo(
     () =>
@@ -258,10 +291,6 @@ export function PortfolioExperience({ initialContent }: Props) {
             </button>
           ))}
         </nav>
-        <div className="current-page-chip" aria-live="polite">
-          <span>CURRENT</span>
-          <strong>{currentLabel}</strong>
-        </div>
         <a className="icon-button magnetic admin-link" href="/admin">
           Admin
         </a>
@@ -666,7 +695,21 @@ function ShowcaseDeck({
         <span>DRAG / SCROLL</span>
       </div>
       {variant === "project" && activeItem ? (
-        <>
+        <div className="project-cinematic-shell">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeItem.id}
+              className="project-background-stage"
+              initial={{ opacity: 0, scale: 1.06 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              <img src={resolveProjectVisual(activeItem)} alt={koText(activeItem, "title")} />
+              <div className="project-background-overlay" />
+            </motion.div>
+          </AnimatePresence>
+
           <aside className="project-story-panel">
             <span>
               {String(Math.min(activeIndex + 1, items.length)).padStart(2, "0")} / {String(items.length).padStart(2, "0")} · {activeItem.year}
@@ -679,55 +722,56 @@ function ShowcaseDeck({
               </button>
             </div>
           </aside>
-          <div className="project-mini-map" aria-label="전체 프로젝트 이미지 맵">
-            {items.map((item, index) => {
-              const thumb = item.images[0]?.url;
-              return (
-                <button
+
+          <div className="project-cards-dock">
+            <div className={`showcase-track project-card-strip`} ref={trackRef}>
+              {items.map((item, index) => (
+                <CompactProjectCard
                   key={item.id}
-                  className={`project-mini-node magnetic ${index === activeIndex ? "active" : ""}`}
-                  onClick={() => focusCard(index)}
-                  aria-label={koText(item, "title")}
-                >
-                  {thumb ? <img src={thumb} alt={koText(item, "title")} /> : <div className="image-placeholder" />}
-                </button>
-              );
-            })}
+                  item={item}
+                  index={index}
+                  total={items.length}
+                  active={activeIndex === index}
+                  register={(node) => {
+                    itemRefs.current[index] = node;
+                  }}
+                  onFocusCard={() => focusCard(index)}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
+            <div className="project-controls floating">
+              <button className="magnetic" onClick={onPrev}>PREV</button>
+              <button className="magnetic" onClick={onNext}>NEXT</button>
+            </div>
           </div>
-          {nextItem ? (
-            <button className="project-peek-card magnetic" onClick={() => focusCard((activeIndex + 1) % items.length)}>
-              <div className="project-peek-media">
-                {nextItem.images[0]?.url ? <img src={nextItem.images[0].url} alt={koText(nextItem, "title")} /> : <div className="image-placeholder" />}
-              </div>
-              <div className="project-peek-copy">
-                <span>NEXT PROJECT</span>
-                <strong>{koText(nextItem, "title")}</strong>
-              </div>
-            </button>
-          ) : null}
+        </div>
+      ) : null}
+      {variant !== "project" ? (
+        <>
+          <div className="showcase-track" ref={trackRef}>
+            {items.map((item, index) => (
+              <ReelsCard
+                key={item.id}
+                item={item}
+                index={index}
+                total={items.length}
+                onSelect={onSelect}
+                fallbackImage={fallbackImage}
+                active={activeIndex === index}
+                register={(node) => {
+                  itemRefs.current[index] = node;
+                }}
+                onFocusCard={() => focusCard(index)}
+              />
+            ))}
+          </div>
+          <div className="project-controls">
+            <button className="magnetic" onClick={onPrev}>PREV</button>
+            <button className="magnetic" onClick={onNext}>NEXT</button>
+          </div>
         </>
       ) : null}
-      <div className={`showcase-track ${variant === "project" ? "project-track" : ""}`} ref={trackRef}>
-        {items.map((item, index) => (
-          <ReelsCard
-            key={item.id}
-            item={item}
-            index={index}
-            total={items.length}
-            onSelect={onSelect}
-            fallbackImage={fallbackImage}
-            active={activeIndex === index}
-            register={(node) => {
-              itemRefs.current[index] = node;
-            }}
-            onFocusCard={() => focusCard(index)}
-          />
-        ))}
-      </div>
-      <div className="project-controls">
-        <button className="magnetic" onClick={onPrev}>PREV</button>
-        <button className="magnetic" onClick={onNext}>NEXT</button>
-      </div>
     </div>
   );
 }
@@ -796,6 +840,53 @@ function ReelsCard({
         <strong>{active ? "TAP TO OPEN" : "CENTER ME"}</strong>
       </motion.div>
     </motion.article>
+  );
+}
+
+function CompactProjectCard({
+  item,
+  index,
+  total,
+  active,
+  onSelect,
+  onFocusCard,
+  register
+}: {
+  item: PortfolioItem;
+  index: number;
+  total: number;
+  active: boolean;
+  onSelect: (item: PortfolioItem) => void;
+  onFocusCard: () => void;
+  register: (node: HTMLElement | null) => void;
+}) {
+  const image = resolveProjectVisual(item);
+  const handleClick = () => {
+    if (active) {
+      onSelect(item);
+      return;
+    }
+    onFocusCard();
+  };
+
+  return (
+    <motion.button
+      ref={register}
+      type="button"
+      className={`project-rail-card magnetic ${active ? "active" : ""}`}
+      onClick={handleClick}
+      onKeyDown={(event) => clickCardOnKey(event, handleClick)}
+      animate={{ opacity: active ? 1 : 0.56, y: active ? -10 : 0 }}
+      transition={{ type: "spring", stiffness: 240, damping: 24, mass: 0.8 }}
+    >
+      <div className="project-rail-media">
+        <img src={image} alt={koText(item, "title")} />
+      </div>
+      <div className="project-rail-copy">
+        <span>{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
+        <strong>{koText(item, "title")}</strong>
+      </div>
+    </motion.button>
   );
 }
 

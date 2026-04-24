@@ -583,7 +583,28 @@ export const defaultContent: PortfolioContent = {
       year: "2024",
       tags: ["ROS2", "CARLA", "Pixhawk", "Mobility"],
       featured: true,
-      featuredRank: 1
+      featuredRank: 1,
+      images: [{ url: "/assets/evidence/project-car-1.jpg", altKo: "자율주행 및 차량 제작 현장", altEn: "Autonomous driving and vehicle project scene", role: "evidence" }],
+      links: [
+        { label: "CARLA 시뮬레이터 활용 자율주행", url: "https://www.notion.so/CARLA-333faf73802f8099b798ca6b64f6b3c1?pvs=21" },
+        { label: "ROS2 자율주행 스터디", url: "https://www.notion.so/ROS2-330faf73802f80da9529d35696f4588d?pvs=21" },
+        { label: "픽스호크활용 자율주행", url: "https://www.notion.so/333faf73802f802788f4ecc0ff3e2dea?pvs=21" },
+        { label: "자율주행 경진대회", url: "https://www.notion.so/333faf73802f806da756fdaadd4f250c?pvs=21" }
+      ],
+      details: {
+        한줄소개: "시뮬레이션과 실제 제어를 함께 다루며 자율주행 시스템의 전체 흐름을 익힌 프로젝트 묶음입니다.",
+        핵심기술: ["Pixhawk", "ROS2 Nav2", "Gazebo", "CARLA", "Mission Planner", "GPS"],
+        진행포인트: [
+          "자율주행 드론과 로버를 모두 다루며 하드웨어 제어와 시뮬레이션을 병행",
+          "센서 입력, 경로 추종, 위치 추정, 비행 제어 로직을 실제 환경 기준으로 학습",
+          "이론 학습에 그치지 않고 대회와 스터디 기록으로 확장"
+        ],
+        배운점: [
+          "센서와 제어 알고리즘은 단독이 아니라 전체 시스템 관점에서 연결되어야 한다는 점",
+          "시뮬레이션과 실제 환경의 차이를 줄이는 튜닝 경험",
+          "모빌리티 문제를 소프트웨어만이 아니라 하드웨어 제약과 함께 바라보는 시각"
+        ]
+      }
     }),
     item({
       id: "project-handmade-car",
@@ -608,7 +629,40 @@ export const defaultContent: PortfolioContent = {
       year: "2023",
       tags: ["AI", "TTS", "Python", "Linux"],
       featured: true,
-      featuredRank: 3
+      featuredRank: 3,
+      images: [{ url: "/assets/generated/growth-corridor.png", altKo: "GAN-TTS 연구를 상징하는 배경 이미지", altEn: "GAN-TTS project background", role: "cover" }],
+      details: {
+        프로젝트설명:
+          "TTS(Text-to-Speech) 기술은 사람이 읽는 것처럼 자연스러운 발음과 감정을 담아 텍스트를 음성으로 변환하는 기술이며, 현실감 있는 GAN-TTS 모델은 사용자 경험과 접근성, 다양한 산업 활용 측면에서 중요성이 계속 커지고 있습니다.",
+        필요성: [
+          "더 자연스럽고 인간다운 음성을 통해 사용자 경험 향상",
+          "시각장애인과 독서 약자를 돕는 보조 기술로의 확장",
+          "광고, 오디오북, 게임, 교육, 고객 지원 등 다양한 산업 적용",
+          "다양한 언어와 방언을 지원하는 음성 콘텐츠 기반 확장"
+        ],
+        핵심주제: ["음성 합성을 위한 GAN-TTS 개발", "Ubuntu / Anaconda 환경 구축", "PyTorch 학습", "wav 데이터 제작"],
+        진행타임라인: [
+          "2023.04 카카오 공공 GPU 접속 테스트 및 개발 환경 구축",
+          "2023.05 Anaconda 및 Ubuntu 환경 구축, PyTorch 학습",
+          "2023.06 wav 파일 제작과 레퍼지토리 기반 응용 학습",
+          "2023.07 목소리 학습 및 TTS 개발 착수",
+          "2023.08~10 문제 해결 및 연구 과제 진행"
+        ],
+        막혔던부분과극복: [
+          "대학 진학 직후 프로젝트에 합류해 선배 중심 팀 커뮤니케이션 구조에 적응하는 데 어려움이 있었지만 조언을 받아 빠르게 적응",
+          "처음 접하는 Ubuntu, Anaconda, CUDA, PyTorch 환경 구성에서 시행착오를 겪으며 개발 환경 세팅 역량 확보",
+          "단순 모델 사용이 아니라 데이터 준비와 실험 환경 구축까지 직접 다루며 연구형 프로젝트의 기본기를 습득"
+        ],
+        환경구축메모: [
+          "CUDA 12.0 설치 및 WSL-Ubuntu 기반 개발 환경 구성",
+          "TensorFlowTTS, PyTorch, wav 데이터 제작 파이프라인 실습",
+          "리포지토리 기반 응용 제작과 학습 환경 반복 세팅"
+        ]
+      },
+      links: [
+        { label: "AWS 클라우드 활용 퍼스널컬러 챗봇 제작", url: "https://www.notion.so/AWS-333faf73802f80a99356c92f666342f7?pvs=21" },
+        { label: "AI탐지기 제작", url: "https://www.notion.so/AI-333faf73802f8065a100d74d1503d5c4?pvs=21" }
+      ]
     }),
     item({
       id: "project-upcycle",
