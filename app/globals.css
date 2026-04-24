@@ -4011,3 +4011,92 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+/* Project page spacing and typography safety */
+.scene.projects {
+  padding-top: clamp(5.9rem, 10vh, 7.2rem);
+}
+
+.scene.projects .route-back-arrow {
+  top: clamp(5.95rem, 10vh, 7.25rem);
+}
+
+.scene.projects .project-stage.carousel-mode {
+  height: calc(100vh - clamp(7rem, 12vh, 8.6rem));
+}
+
+.scene.projects .project-stage-header {
+  top: clamp(1.05rem, 2.1vw, 1.7rem);
+  left: clamp(3.6rem, 5.2vw, 4.8rem);
+  right: clamp(1rem, 2vw, 1.6rem);
+  align-items: flex-start;
+  gap: clamp(0.7rem, 1.4vw, 1.2rem);
+}
+
+.scene.projects .project-stage-header > div:first-child {
+  min-width: 0;
+}
+
+.scene.projects .project-stage-header .eyebrow {
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.scene.projects .project-stage-header .panel-title {
+  max-width: min(58vw, 720px);
+  font-size: clamp(1.55rem, 3.6vw, 4.05rem);
+  line-height: 1.03;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.scene.projects .project-view-toggle {
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+}
+
+.scene.projects .project-reel-stage .showcase-header {
+  display: none;
+}
+
+.scene.projects .project-cinematic-shell {
+  padding-top: clamp(4.8rem, 9vh, 6.4rem);
+}
+
+.scene.projects .project-story-panel strong {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 860px) {
+  .scene.projects {
+    padding-top: 5.6rem;
+  }
+
+  .scene.projects .route-back-arrow {
+    top: 5.75rem;
+  }
+
+  .scene.projects .project-stage.carousel-mode {
+    height: calc(100vh - 6.35rem);
+  }
+
+  .scene.projects .project-stage-header {
+    top: 0.85rem;
+    left: 3.25rem;
+    right: 0.65rem;
+  }
+
+  .scene.projects .project-stage-header .panel-title {
+    max-width: 52vw;
+    font-size: clamp(1.35rem, 7vw, 2.5rem);
+  }
+
+  .scene.projects .project-view-toggle {
+    transform: scale(0.78);
+  }
+
+  .scene.projects .project-cinematic-shell {
+    padding-top: 4.4rem;
+  }
+}
