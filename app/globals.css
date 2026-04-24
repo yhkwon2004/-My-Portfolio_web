@@ -4100,3 +4100,53 @@ code {
     padding-top: 4.4rem;
   }
 }
+
+/* Project card dock: keep the rail anchored to the device bottom-right */
+.scene.projects .project-cinematic-shell {
+  position: relative;
+}
+
+.scene.projects .project-cards-dock {
+  position: absolute;
+  right: clamp(0.8rem, 2.2vw, 1.8rem);
+  bottom: clamp(0.7rem, 1.8vh, 1.25rem);
+  z-index: 8;
+  width: min(720px, 58vw);
+  min-width: min(520px, 52vw);
+  padding: 0;
+  margin: 0;
+}
+
+.scene.projects .project-card-strip {
+  justify-content: flex-end;
+  align-items: flex-end;
+  width: 100%;
+  padding: 0.85rem 0.1rem 0;
+}
+
+.scene.projects .project-rail-card {
+  transform-origin: center bottom;
+}
+
+.scene.projects .project-controls.floating {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.55rem);
+  margin: 0;
+  justify-content: flex-end;
+}
+
+@media (max-width: 860px) {
+  .scene.projects .project-cards-dock {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    min-width: 0;
+  }
+
+  .scene.projects .project-card-strip {
+    justify-content: flex-start;
+    padding-top: 0.7rem;
+  }
+}
