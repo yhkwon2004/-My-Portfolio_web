@@ -86,7 +86,8 @@ function resolveBucketYear(year?: string) {
 }
 
 function resolveProjectVisual(item: PortfolioItem) {
-  if (item.images[0]?.url) return item.images[0].url;
+  const cover = item.images.find((image) => image.role === "cover") ?? item.images[0];
+  if (cover?.url) return cover.url;
 
   if (item.id.includes("autonomous") || item.id.includes("handmade-car")) {
     return "/assets/evidence/project-car-1.jpg";
@@ -117,6 +118,20 @@ function resolveProjectVisual(item: PortfolioItem) {
   }
 
   return "/assets/generated/project-lab.png";
+}
+
+function projectGalleryImages(item: PortfolioItem) {
+  const coverUrl = resolveProjectVisual(item);
+  const seen = new Set([coverUrl]);
+  return item.images.filter((image) => {
+    if (!image.url || seen.has(image.url)) return false;
+    seen.add(image.url);
+    return true;
+  });
+}
+
+function projectVideoLinks(item: PortfolioItem) {
+  return (item.links ?? []).filter((link) => /video|youtu\.be|youtube|shorts/i.test(`${link.label} ${link.url}`));
 }
 
 export function PortfolioExperience({ initialContent }: Props) {
@@ -769,8 +784,10 @@ function ShowcaseDeck({
   const rafRef = useRef(0);
   const activeItem = items[Math.min(activeIndex, items.length - 1)];
   const nextItem = items.length > 1 ? items[(activeIndex + 1) % items.length] : activeItem;
+  const activeVisual = activeItem ? resolveProjectVisual(activeItem) : "";
 
   const focusCard = (index: number) => {
+    setActiveIndex(index);
     itemRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   };
 
@@ -779,12 +796,14 @@ function ShowcaseDeck({
     if (!track) return;
 
     const updateActive = () => {
-      const center = track.scrollLeft + track.clientWidth / 2;
+      const trackRect = track.getBoundingClientRect();
+      const center = trackRect.left + trackRect.width / 2;
       let closest = 0;
       let closestDistance = Number.POSITIVE_INFINITY;
       itemRefs.current.forEach((node, index) => {
         if (!node) return;
-        const nodeCenter = node.offsetLeft + node.offsetWidth / 2;
+        const nodeRect = node.getBoundingClientRect();
+        const nodeCenter = nodeRect.left + nodeRect.width / 2;
         const distance = Math.abs(center - nodeCenter);
         if (distance < closestDistance) {
           closest = index;
@@ -820,10 +839,11 @@ function ShowcaseDeck({
       </div>
       {variant === "project" && activeItem ? (
         <div className="project-cinematic-shell">
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             <motion.div
-              key={activeItem.id}
+              key={`${activeItem.id}-${activeVisual}`}
               className="project-background-stage"
+              style={{ backgroundImage: `url(${activeVisual})` }}
               initial={{
                 opacity: 0,
                 scale: 0.42,
@@ -838,11 +858,12 @@ function ShowcaseDeck({
                 y: 0,
                 clipPath: "inset(0% 0% 0% 0% round 32px)"
               }}
-              exit={{ opacity: 0, scale: 1.08, filter: "blur(8px)" }}
-              transition={{ duration: 0.68, ease: [0.2, 0.8, 0.2, 1] }}
+              exit={{ opacity: 0, scale: 1.04, filter: "blur(10px)", transition: { duration: 0.22 } }}
+              transition={{ duration: 0.46, ease: [0.2, 0.8, 0.2, 1] }}
             >
               <motion.img
-                src={resolveProjectVisual(activeItem)}
+                key={activeVisual}
+                src={activeVisual}
                 alt={koText(activeItem, "title")}
                 initial={{ scale: 1.14 }}
                 animate={{ scale: 1.02 }}
@@ -1086,10 +1107,14 @@ function ProjectNewsCard({
 }
 
 function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => void }) {
-  const image = item.images[0]?.url ?? (item.type === "award" ? "/assets/evidence/award-collection.svg" : undefined);
-  const alt = item.images[0]?.altKo ?? koText(item, "title");
+  const cover = item.images.find((entry) => entry.role === "cover") ?? item.images[0];
+  const image = cover?.url ?? (item.type === "award" ? "/assets/evidence/award-collection.svg" : undefined);
+  const alt = cover?.altKo ?? koText(item, "title");
   const entries = detailEntries(item);
   const hasDeepInfo = entries.length > 0 || Boolean(item.links?.length);
+  const galleryImages = item.type === "project" ? projectGalleryImages(item) : item.images.filter((entry) => entry.url !== image);
+  const videoLinks = item.type === "project" ? projectVideoLinks(item) : [];
+  const hasMediaWall = galleryImages.length > 0 || videoLinks.length > 0;
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -1150,11 +1175,26 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
           <h2>{koText(item, "title")}</h2>
           <p>{koText(item, "summary")}</p>
           <div className="tag-row">{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-          {item.images.length > 1 ? (
-            <div className="modal-gallery expanded-gallery">
-              {item.images.slice(1).map((galleryImage) => (
-                <img key={galleryImage.url} src={galleryImage.url} alt={galleryImage.altKo} />
-              ))}
+          {hasMediaWall ? (
+            <div className="project-modal-media-wall">
+              {galleryImages.length ? (
+                <div className="modal-gallery expanded-gallery">
+                  {galleryImages.slice(0, 6).map((galleryImage) => (
+                    <img key={galleryImage.url} src={galleryImage.url} alt={galleryImage.altKo} />
+                  ))}
+                </div>
+              ) : null}
+              {videoLinks.length ? (
+                <div className="modal-video-grid">
+                  {videoLinks.map((link) => (
+                    <a key={link.url} className="modal-video-card magnetic" href={link.url} target="_blank" rel="noreferrer">
+                      <span>VIDEO</span>
+                      <strong>{link.label}</strong>
+                      <em>열어서 보기</em>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {hasDeepInfo ? (

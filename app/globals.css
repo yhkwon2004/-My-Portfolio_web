@@ -4635,8 +4635,8 @@ code {
   align-items: flex-end;
   justify-content: flex-start;
   width: 100%;
-  padding: 0.85rem 0.1rem 0.2rem;
-  scroll-padding-inline: 0.25rem;
+  padding: 0.85rem max(0.1rem, calc(50% - 86px)) 0.2rem;
+  scroll-padding-inline: max(0.1rem, calc(50% - 86px));
 }
 
 .scene.projects .project-controls.floating {
@@ -4672,4 +4672,90 @@ code {
     width: auto;
     min-width: 0;
   }
+
+  .scene.projects .project-card-strip {
+    padding-inline: max(0.1rem, calc(50% - 76px));
+    scroll-padding-inline: max(0.1rem, calc(50% - 76px));
+  }
+}
+
+/* Active project media: keep the background bound to the centered card */
+.scene.projects .project-background-stage {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  isolation: isolate;
+}
+
+.scene.projects .project-background-stage img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  opacity: 1;
+}
+
+.scene.projects .project-background-overlay {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.project-modal-media-wall {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.project-modal-media-wall .expanded-gallery {
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  max-height: none;
+}
+
+.project-modal-media-wall .expanded-gallery img {
+  height: auto;
+  min-height: 96px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.modal-video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.7rem;
+}
+
+.modal-video-card {
+  display: grid;
+  gap: 0.28rem;
+  min-height: 96px;
+  padding: 0.85rem;
+  border: 1px solid rgba(126, 244, 255, 0.22);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 120, 214, 0.18), transparent 38%),
+    linear-gradient(145deg, rgba(126, 244, 255, 0.12), rgba(255, 255, 255, 0.04));
+  color: #fff;
+  text-decoration: none;
+}
+
+.modal-video-card span {
+  color: var(--cyan);
+  font: 900 0.68rem/1 "Courier New", monospace;
+  letter-spacing: 0.16em;
+}
+
+.modal-video-card strong {
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.modal-video-card em {
+  align-self: end;
+  color: var(--gold);
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
