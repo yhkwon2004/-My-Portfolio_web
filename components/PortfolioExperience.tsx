@@ -17,7 +17,7 @@ type SectionId = (typeof sections)[number];
 
 const navItems: { label: string; target: SectionId }[] = [
   { label: "메인페이지", target: "entrance" },
-  { label: "이력", target: "resume" },
+  { label: "대표 프로젝트", target: "resume" },
   { label: "수상", target: "awards" },
   { label: "프로젝트", target: "projects" },
   { label: "연락", target: "contact" }
@@ -26,7 +26,7 @@ const navItems: { label: string; target: SectionId }[] = [
 const sectionLabels: Record<SectionId, string> = {
   entrance: "메인페이지",
   intro: "소개",
-  resume: "이력",
+  resume: "대표 프로젝트",
   crossroads: "갈림길",
   awards: "수상",
   projects: "프로젝트",
@@ -64,15 +64,18 @@ function sectionIndex(section: SectionId) {
   return sections.indexOf(section);
 }
 
+function resolveBucketYear(year?: string) {
+  const matches = year?.match(/20\d{2}/g);
+  return matches?.at(-1) ?? null;
+}
+
 export function PortfolioExperience({ initialContent }: Props) {
   const [content, setContent] = useState(initialContent);
   const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [projectView, setProjectView] = useState<ProjectView>("carousel");
-  const [showIntroDetails, setShowIntroDetails] = useState(false);
   const wheelLockRef = useRef(false);
-  const awardTrackRef = useRef<HTMLDivElement | null>(null);
   const projectTrackRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -134,13 +137,22 @@ export function PortfolioExperience({ initialContent }: Props) {
       const target = event.target instanceof Element ? event.target : null;
       const track = target?.closest<HTMLElement>(".showcase-track");
       const grid = target?.closest<HTMLElement>(".project-news-grid");
+      const awardGrid = target?.closest<HTMLElement>(".award-year-grid");
 
       if (selected) {
         event.preventDefault();
         return;
       }
 
-      if (phase === "awards" || phase === "projects") {
+      if (phase === "awards") {
+        if (awardGrid) {
+          return;
+        }
+        event.preventDefault();
+        return;
+      }
+
+      if (phase === "projects") {
         if (track) {
           event.preventDefault();
           const delta = event.deltaX + event.deltaY;
@@ -215,10 +227,17 @@ export function PortfolioExperience({ initialContent }: Props) {
   const experience = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "experience")), [visibleItems]);
   const certifications = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "certification")), [visibleItems]);
   const featuredProjects = projects.filter((item) => item.featured).slice(0, 5);
-  const featuredAwards = awards.filter((item) => item.featured).slice(0, 4);
   const phase = sections[active] as SectionId;
   const currentLabel = sectionLabels[phase];
   const activeNavTarget = navItems.some((item) => item.target === phase) ? phase : undefined;
+  const awardBuckets = useMemo(
+    () =>
+      ["2023", "2024", "2025", "2026"].map((year) => ({
+        year,
+        items: awards.filter((item) => resolveBucketYear(item.year) === year)
+      })),
+    [awards]
+  );
 
   const scrollTrack = (ref: RefObject<HTMLDivElement | null>, direction: 1 | -1) => {
     ref.current?.scrollBy({ left: direction * Math.min(window.innerWidth * 0.82, 1040), behavior: "smooth" });
@@ -279,16 +298,12 @@ export function PortfolioExperience({ initialContent }: Props) {
             <p className="eyebrow">ENTRY PROFILE</p>
             <div className="intro-grid">
               <article className="large-statement impact-statement">
-                <p className="hello-kicker">안녕하세요.</p>
                 <h2>
                   <span>현장문제를 이해하고</span>
                   <span>아이디어를 빠르게 검증하는</span>
                   <span className="gradient-line">개발자 권용현입니다.</span>
                 </h2>
                 <p>문제를 관찰하고, 작동하는 형태로 만들고, 검증된 결과를 다음 도전으로 연결합니다.</p>
-                <button className="primary-cta magnetic" onClick={() => setShowIntroDetails((value) => !value)}>
-                  {showIntroDetails ? "CLOSE DETAILS" : "상세 정보 보기"}
-                </button>
               </article>
               <div className="strategy-stack">
                 {["문제 관찰", "빠른 검증", "작동하는 제품", "공유와 확장"].map((step, index) => (
@@ -299,30 +314,44 @@ export function PortfolioExperience({ initialContent }: Props) {
                 ))}
               </div>
             </div>
-            {showIntroDetails ? (
-              <div className="intro-detail-dock">
-                <IntroColumn title="EDUCATION" items={education} onSelect={setSelected} />
-                <IntroColumn title="EXPERIENCE" items={experience} onSelect={setSelected} />
-                <IntroColumn title="CERTIFICATION" items={certifications} onSelect={setSelected} />
-              </div>
-            ) : null}
+            <div className="intro-detail-dock">
+              <IntroColumn title="학력" items={education} onSelect={setSelected} />
+              <IntroColumn title="경력" items={experience} onSelect={setSelected} />
+              <IntroColumn title="자격" items={certifications} onSelect={setSelected} />
+            </div>
           </div>
         </section>
 
         <section className={`scene resume ${active === 2 ? "active" : ""}`}>
-          <div className="resume-fullscreen">
+          <div className="resume-fullscreen featured-project-shell">
             <div className="resume-heading">
-              <p className="eyebrow">ROUTE LOG</p>
-              <h2 className="panel-title">이력</h2>
+              <p className="eyebrow">CURATED WORKS</p>
+              <h2 className="panel-title">대표 프로젝트</h2>
+              <p className="featured-project-intro">문제 인식부터 구현, 검증까지 가장 선명하게 남은 프로젝트를 한 화면에 정리했습니다.</p>
             </div>
-            <div className="resume-spotlight">
-              <SpotlightRail label="FEATURED AWARDS" title="대표 수상" items={featuredAwards} onSelect={setSelected} />
-              <SpotlightRail label="FEATURED PROJECTS" title="대표 프로젝트" items={featuredProjects} onSelect={setSelected} />
-            </div>
-            <div className="resume-map compact-map">
-              <ResumeRail title="학력" items={education} onSelect={setSelected} />
-              <ResumeRail title="경력" items={experience} onSelect={setSelected} />
-              <ResumeRail title="자격" items={certifications} onSelect={setSelected} />
+            <div className="featured-project-layout">
+              {featuredProjects[0] ? (
+                <ProjectNewsCard
+                  item={featuredProjects[0]}
+                  index={0}
+                  total={featuredProjects.length}
+                  onSelect={setSelected}
+                  large
+                  fallbackImage="/assets/evidence/project-car-1.jpg"
+                />
+              ) : null}
+              <div className="featured-project-grid">
+                {featuredProjects.slice(1).map((item, index) => (
+                  <ProjectNewsCard
+                    key={item.id}
+                    item={item}
+                    index={index + 1}
+                    total={featuredProjects.length}
+                    onSelect={setSelected}
+                    fallbackImage="/assets/evidence/project-car-1.jpg"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -346,17 +375,7 @@ export function PortfolioExperience({ initialContent }: Props) {
 
         <section className={`scene awards ${active === 4 ? "active" : ""}`}>
           <BackArrow onClick={() => setSection("crossroads")} />
-          <ShowcaseDeck
-            eyebrow="AWARD SHOWCASE"
-            title="수상 기록"
-            items={awards}
-            trackRef={awardTrackRef}
-            onSelect={setSelected}
-            onPrev={() => scrollTrack(awardTrackRef, -1)}
-            onNext={() => scrollTrack(awardTrackRef, 1)}
-            onExitEnd={() => setSection("contact")}
-            fallbackImage="/assets/evidence/award-collection.svg"
-          />
+          <AwardsYearBoard buckets={awardBuckets} onSelect={setSelected} />
         </section>
 
         <section className={`scene projects ${active === 5 ? "active" : ""}`}>
@@ -490,6 +509,57 @@ function SpotlightRail({ label, title, items, onSelect }: { label: string; title
   );
 }
 
+function AwardsYearBoard({
+  buckets,
+  onSelect
+}: {
+  buckets: { year: string; items: PortfolioItem[] }[];
+  onSelect: (item: PortfolioItem) => void;
+}) {
+  return (
+    <div className="content-panel awards-year-board">
+      <div className="showcase-header">
+        <div>
+          <p className="eyebrow">AWARD ARCHIVE</p>
+          <h2 className="panel-title">수상 기록</h2>
+        </div>
+        <span>2023 / 2024 / 2025 / 2026</span>
+      </div>
+      <div className="award-year-grid">
+        {buckets.map((bucket) => (
+          <section key={bucket.year} className="award-year-column">
+            <header>
+              <span>{bucket.year}</span>
+              <strong>{bucket.items.length}개 항목</strong>
+            </header>
+            <div className="award-year-list">
+              {bucket.items.length ? (
+                bucket.items.map((item, index) => (
+                  <button key={item.id} className="award-year-card magnetic" onClick={() => onSelect(item)}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{koText(item, "title")}</strong>
+                    <p>{koText(item, "summary")}</p>
+                    <div className="tag-row">
+                      {item.tags.slice(0, 3).map((tag) => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="award-empty-card">
+                  <strong>{bucket.year}</strong>
+                  <p>아직 연결된 수상 기록이 없습니다.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ShowcaseDeck({
   eyebrow,
   title,
@@ -519,6 +589,11 @@ function ShowcaseDeck({
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
   const rafRef = useRef(0);
   const activeItem = items[Math.min(activeIndex, items.length - 1)];
+  const nextItem = items.length > 1 ? items[(activeIndex + 1) % items.length] : activeItem;
+
+  const focusCard = (index: number) => {
+    itemRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  };
 
   useEffect(() => {
     const track = trackRef.current;
@@ -565,20 +640,46 @@ function ShowcaseDeck({
         <span>DRAG / SCROLL</span>
       </div>
       {variant === "project" && activeItem ? (
-        <div className="project-reel-banner">
-          <div className="project-reel-copy">
+        <>
+          <aside className="project-story-panel">
             <span>
-              {String(Math.min(activeIndex + 1, items.length)).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+              {String(Math.min(activeIndex + 1, items.length)).padStart(2, "0")} / {String(items.length).padStart(2, "0")} · {activeItem.year}
             </span>
             <strong>{koText(activeItem, "title")}</strong>
             <p>{koText(activeItem, "summary")}</p>
+            <div className="project-story-actions">
+              <button className="primary-cta magnetic" onClick={() => onSelect(activeItem)}>
+                자세히 보기
+              </button>
+            </div>
+          </aside>
+          <div className="project-mini-map" aria-label="전체 프로젝트 이미지 맵">
+            {items.map((item, index) => {
+              const thumb = item.images[0]?.url;
+              return (
+                <button
+                  key={item.id}
+                  className={`project-mini-node magnetic ${index === activeIndex ? "active" : ""}`}
+                  onClick={() => focusCard(index)}
+                  aria-label={koText(item, "title")}
+                >
+                  {thumb ? <img src={thumb} alt={koText(item, "title")} /> : <div className="image-placeholder" />}
+                </button>
+              );
+            })}
           </div>
-          <div className="project-reel-meta">
-            {activeItem.tags.slice(0, 4).map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </div>
-        </div>
+          {nextItem ? (
+            <button className="project-peek-card magnetic" onClick={() => focusCard((activeIndex + 1) % items.length)}>
+              <div className="project-peek-media">
+                {nextItem.images[0]?.url ? <img src={nextItem.images[0].url} alt={koText(nextItem, "title")} /> : <div className="image-placeholder" />}
+              </div>
+              <div className="project-peek-copy">
+                <span>NEXT PROJECT</span>
+                <strong>{koText(nextItem, "title")}</strong>
+              </div>
+            </button>
+          ) : null}
+        </>
       ) : null}
       <div className={`showcase-track ${variant === "project" ? "project-track" : ""}`} ref={trackRef}>
         {items.map((item, index) => (
@@ -593,9 +694,7 @@ function ShowcaseDeck({
             register={(node) => {
               itemRefs.current[index] = node;
             }}
-            onFocusCard={() => {
-              itemRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-            }}
+            onFocusCard={() => focusCard(index)}
           />
         ))}
         {onExitEnd ? (
@@ -604,9 +703,7 @@ function ShowcaseDeck({
             register={(node) => {
               itemRefs.current[items.length] = node;
             }}
-            onFocusCard={() => {
-              itemRefs.current[items.length]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-            }}
+            onFocusCard={() => focusCard(items.length)}
             onExit={onExitEnd}
           />
         ) : null}

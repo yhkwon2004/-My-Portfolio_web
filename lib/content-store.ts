@@ -65,18 +65,42 @@ function redisClient() {
   return new Redis({ url, token });
 }
 
+function mergeWithDefaults(content: PortfolioContent): PortfolioContent {
+  const storedItems = new Map(content.items.map((item) => [item.id, item]));
+  const defaultIds = new Set(defaultContent.items.map((item) => item.id));
+
+  const items = [
+    ...defaultContent.items.map((item) => storedItems.get(item.id) ?? item),
+    ...content.items.filter((item) => !defaultIds.has(item.id))
+  ];
+
+  return contentSchema.parse({
+    ...defaultContent,
+    ...content,
+    settings: {
+      ...defaultContent.settings,
+      ...content.settings,
+      backgrounds: {
+        ...defaultContent.settings.backgrounds,
+        ...content.settings.backgrounds
+      }
+    },
+    items
+  });
+}
+
 export async function getContent(): Promise<PortfolioContent> {
   const redis = redisClient();
 
   if (redis) {
     const stored = await redis.get<PortfolioContent>(CONTENT_KEY);
     if (stored) {
-      return contentSchema.parse(stored);
+      return mergeWithDefaults(stored);
     }
   }
 
   const cache = globalThis as GlobalCache;
-  return cache.__portfolioContent ?? defaultContent;
+  return cache.__portfolioContent ? mergeWithDefaults(cache.__portfolioContent) : defaultContent;
 }
 
 export async function saveContent(content: PortfolioContent): Promise<PortfolioContent> {
