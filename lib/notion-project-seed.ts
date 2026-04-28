@@ -35,7 +35,10 @@ export const notionProjectOverrides: PortfolioItem[] = [
     images: [
       image("/assets/notion-projects/carla-cover.png", "CARLA 자율주행 시뮬레이션 커버", "cover"),
       image("/assets/notion-projects/ros2-gazebo.png", "ROS2 Gazebo 실습 화면"),
-      image("/assets/notion-projects/pixhawk-cover.png", "픽스호크 자율주행 실습 장면")
+      image("/assets/notion-projects/pixhawk-cover.png", "픽스호크 자율주행 실습 장면"),
+      image("/assets/evidence/projects/autonomous-rviz.png", "RViz 자율주행 경로 시각화 화면"),
+      image("/assets/evidence/projects/autonomous-track-overview.webp", "자율주행 트랙 전체 장면"),
+      image("/assets/evidence/projects/autonomous-track-run.jpg", "자율주행 트랙 주행 실습 장면")
     ],
     links: [
       { label: "CARLA 자율주행", url: "https://www.notion.so/333faf73802f8099b798ca6b64f6b3c1" },
@@ -72,7 +75,10 @@ export const notionProjectOverrides: PortfolioItem[] = [
       image("/assets/notion-projects/handmade-car-intro.png", "자작차량 제작 소개 화면"),
       image("/assets/notion-projects/handmade-car-workshop.jpg", "자작차량 제작 작업 현장"),
       image("/assets/notion-projects/handmade-car-catia.jpg", "CATIA 기반 설계 장면"),
-      image("/assets/notion-projects/handmade-car-driving.jpg", "자작차량 주행 사진")
+      image("/assets/notion-projects/handmade-car-driving.jpg", "자작차량 주행 사진"),
+      image("/assets/evidence/projects/handmade-car-build.jpg", "자작차량 조립 및 제작 장면"),
+      image("/assets/evidence/projects/handmade-car-chassis.jpg", "자작차량 차체 작업 장면"),
+      image("/assets/evidence/projects/handmade-car-workshop.jpg", "자작차량 제작 워크숍 장면")
     ],
     links: [
       { label: "Notion 원문", url: "https://www.notion.so/330faf73802f80c7b854e0317d7e8c56" },
@@ -161,7 +167,12 @@ export const notionProjectOverrides: PortfolioItem[] = [
       image("/assets/evidence/project-upcycle-1.jpg", "업사이클 프로젝트 대표 제품", "cover"),
       image("/assets/notion-projects/jbmotors-upcycle-cover.png", "전북현대모터스 FC 업사이클 프로젝트"),
       image("/assets/notion-projects/givingplus-upcycle-cover.png", "기빙플러스 업사이클 프로젝트"),
-      image("/assets/notion-projects/coffee-box-cover.jpg", "커피박 상자 제작 프로젝트")
+      image("/assets/notion-projects/coffee-box-cover.jpg", "커피박 상자 제작 프로젝트"),
+      image("/assets/evidence/projects/upcycle-material.webp", "업사이클 소재 준비 장면"),
+      image("/assets/evidence/projects/upcycle-product-making.jpg", "업사이클 제품 제작 과정"),
+      image("/assets/evidence/projects/upcycle-panel.jpg", "업사이클 패널 제작 결과"),
+      image("/assets/evidence/projects/upcycle-coffee-box.jpg", "커피박 업사이클 상자 결과물"),
+      image("/assets/evidence/projects/upcycle-award-stage.jpg", "업사이클 프로젝트 발표 및 수상 장면")
     ],
     links: [
       { label: "전북현대모터스 FC 협력", url: "https://www.notion.so/330faf73802f808eb0caea4524c71e63" },
@@ -225,7 +236,13 @@ export const notionProjectOverrides: PortfolioItem[] = [
     summaryKo: "물리적 특성 추출 기반으로 AI 생성물 여부를 판별하는 탐지 인터페이스를 설계하고, 빠른 프로토타이핑으로 검증한 프로젝트입니다.",
     year: "2026",
     tags: ["AI", "Detection", "Computer Vision"],
-    images: [image("/assets/notion-projects/ai-detector-cover.png", "AI 생성물 탐지기 커버", "cover")],
+    images: [
+      image("/assets/notion-projects/ai-detector-cover.png", "AI 생성물 탐지기 커버", "cover"),
+      image("/assets/evidence/projects/ai-detector-grid.png", "AI 생성물 탐지 판단 구조 자료"),
+      image("/assets/evidence/projects/ai-detector-worksheet.png", "AI 생성물 탐지 분석 워크시트"),
+      image("/assets/evidence/projects/ai-detector-emotion-board.png", "AI 생성물 탐지 감정 분석 보드"),
+      image("/assets/evidence/projects/ai-detector-dataset.png", "AI 생성물 탐지 데이터셋 정리 화면")
+    ],
     links: [
       { label: "Notion 원문", url: "https://www.notion.so/333faf73802f8065a100d74d1503d5c4" },
       { label: "Demo", url: "https://3000-ii7n0v0uca8g55c0qrqox-583b4d74.sandbox.novita.ai" }
@@ -248,7 +265,12 @@ export const notionProjectOverrides: PortfolioItem[] = [
     images: [
       image("/assets/notion-projects/dontstarve-cover.png", "결식 아동 예약결제 서비스 커버", "cover"),
       image("/assets/notion-projects/dontstarve-map.png", "결식 아동 예약결제 지도 화면"),
-      image("/assets/notion-projects/dontstarve-detail.png", "결식 아동 예약결제 상세 화면")
+      image("/assets/notion-projects/dontstarve-detail.png", "결식 아동 예약결제 상세 화면"),
+      image("/assets/evidence/projects/dontstarve-home.png", "결식 아동 예약결제 앱 홈 화면"),
+      image("/assets/evidence/projects/dontstarve-map.png", "결식 아동 예약결제 지도 탐색 화면"),
+      image("/assets/evidence/projects/dontstarve-reservation.png", "결식 아동 예약결제 예약 화면"),
+      image("/assets/evidence/projects/dontstarve-erd.png", "결식 아동 예약결제 데이터베이스 ERD"),
+      image("/assets/evidence/projects/dontstarve-db-data.png", "결식 아동 예약결제 데이터베이스 화면")
     ],
     links: [
       { label: "Notion 원문", url: "https://www.notion.so/330faf73802f8007b1b5f8f59cc56b92" },
@@ -338,7 +360,10 @@ export const notionProjectOverrides: PortfolioItem[] = [
     images: [
       image("/assets/notion-projects/rehab-game-cover.png", "스마트 헬스케어 재활 치료 게임 커버", "cover"),
       image("/assets/notion-projects/rehab-game-screen-1.png", "재활 치료 게임 화면 1"),
-      image("/assets/notion-projects/rehab-game-screen-2.png", "재활 치료 게임 화면 2")
+      image("/assets/notion-projects/rehab-game-screen-2.png", "재활 치료 게임 화면 2"),
+      image("/assets/evidence/projects/rehab-game-motion.png", "재활 동작 인식 게임 테스트 장면"),
+      image("/assets/evidence/projects/rehab-app-login.png", "재활 치료 앱 로그인 화면"),
+      image("/assets/evidence/projects/rehab-app-flow.png", "재활 치료 앱 주요 화면 흐름")
     ],
     links: [{ label: "Notion 원문", url: "https://www.notion.so/335faf73802f80699aa2c5c408e89ab0" }],
     details: {
@@ -500,7 +525,11 @@ export const notionProjectAdditions: PortfolioItem[] = [
     summaryKo: "쓴 한약재 백출을 발효 기반 식혜로 바꾸고 데이터 예측까지 시도한 식품 개발 프로젝트입니다.",
     year: "2023",
     tags: ["Food Tech", "Data", "Experiment"],
-    images: [image("/assets/notion-projects/baekchul-cover.jpg", "발효 백출 식혜 제작 커버", "cover")],
+    images: [
+      image("/assets/evidence/projects/baekchul-sikhye-cover.png", "발효 백출 식혜 제작 커버", "cover"),
+      image("/assets/evidence/projects/baekchul-risk-chart.png", "백출 식혜 위해 인자 분석 자료"),
+      image("/assets/evidence/projects/baekchul-fermentation-chart.png", "발효 백출 식혜 발효 결과 분석 자료")
+    ],
     links: [{ label: "Notion 원문", url: "https://www.notion.so/333faf73802f80b0b391d7fe4e6af52f" }]
   }),
   project({

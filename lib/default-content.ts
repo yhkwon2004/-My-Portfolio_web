@@ -1,21 +1,89 @@
-import type { PortfolioContent, PortfolioItem } from "./types";
+import type { PortfolioContent, PortfolioImage, PortfolioItem } from "./types";
 
 const now = new Date().toISOString();
-
-const item = (input: Omit<PortfolioItem, "visible" | "featured" | "featuredRank" | "images" | "tags"> & Partial<PortfolioItem>): PortfolioItem => ({
-  visible: true,
-  featured: false,
-  featuredRank: 99,
-  images: [],
-  tags: [],
-  ...input
-});
 
 const awardArchiveImage = {
   url: "/assets/evidence/award-collection.svg",
   altKo: "수상 기록 모음",
   altEn: "Award archive collection",
   role: "certificate" as const
+};
+
+function certificate(fileStem: string, altKo: string, role: PortfolioImage["role"] = "certificate"): PortfolioImage {
+  return {
+    url: `/assets/evidence/awards/${fileStem}.jpg`,
+    altKo,
+    altEn: altKo,
+    role
+  };
+}
+
+const awardImagesByDate: Record<string, PortfolioImage[]> = {
+  "2023-06-21": [certificate("award-2023-06-21", "2023년 6월 21일 수상 상장")],
+  "2023-08-31": [certificate("award-2023-08-31", "2023년 8월 31일 수상 상장")],
+  "2023-11-14": [certificate("award-2023-11-14", "2023년 11월 14일 수상 상장")],
+  "2023-12-10": [certificate("award-2023-12-10", "2023년 12월 10일 수상 상장")],
+  "2023-12-20": [certificate("award-2023-12-20", "2023년 12월 20일 수상 상장")],
+  "2023-12-22": [certificate("award-2023-12-22", "2023년 12월 22일 수상 상장")],
+  "2024-01-26": [certificate("award-2024-01-26", "2024년 1월 26일 수상 상장")],
+  "2024-05-25": [certificate("award-2024-05-25", "2024년 5월 25일 수상 상장")],
+  "2024-05-31": [certificate("award-2024-05-31", "2024년 5월 31일 수상 상장")],
+  "2024-06-25": [certificate("award-2024-06-25", "2024년 6월 25일 수상 상장")],
+  "2024-06-26": [certificate("award-2024-06-26", "2024년 6월 26일 수상 상장")],
+  "2024-08-20": [certificate("award-2024-08-20", "2024년 8월 20일 수상 상장")],
+  "2024-08-31": [certificate("award-2024-08-31", "2024년 8월 31일 수상 상장")],
+  "2024-09-06": [certificate("award-2024-09-06", "2024년 9월 6일 수상 상장")],
+  "2024-10-31": [certificate("award-2024-10-31", "2024년 10월 31일 수상 상장")],
+  "2024-11-02": [certificate("award-2024-11-02", "2024년 11월 2일 수상 상장")],
+  "2024-11-13": [
+    certificate("award-2024-11-13", "2024년 11월 13일 수상 상장"),
+    certificate("award-2024-11-13-2", "2024년 11월 13일 추가 수상 상장", "gallery")
+  ],
+  "2024-11-21": [certificate("award-2024-11-21", "2024년 11월 21일 수상 상장")],
+  "2024-12-06": [
+    certificate("award-2024-12-06", "2024년 12월 6일 수상 상장"),
+    certificate("award-2024-12-06-2", "2024년 12월 6일 추가 수상 상장", "gallery")
+  ],
+  "2024-12-19": [certificate("award-2024-12-19", "2024년 12월 19일 수상 상장")],
+  "2024-12-24": [certificate("award-2024-12-24", "2024년 12월 24일 수상 상장")],
+  "2025-02-14": [certificate("award-2025-02-14", "2025년 2월 14일 수상 상장")],
+  "2025-05-12": [certificate("award-2025-05-12", "2025년 5월 12일 수상 상장")],
+  "2025-06-04": [certificate("award-2025-06-04", "2025년 6월 4일 수상 상장")],
+  "2025-07-04": [certificate("award-2025-07-04", "2025년 7월 4일 수상 상장")],
+  "2025-07-18": [certificate("award-2025-07-18", "2025년 7월 18일 수상 상장")],
+  "2025-08-07": [
+    certificate("award-2025-08-07", "2025년 8월 7일 수상 상장"),
+    certificate("award-2025-08-07-2", "2025년 8월 7일 추가 수상 상장", "gallery")
+  ],
+  "2025-08-29": [certificate("award-2025-08-29", "2025년 8월 29일 수상 상장")],
+  "2025-09-16": [
+    certificate("award-2025-09-16", "2025년 9월 16일 수상 상장"),
+    certificate("award-2025-09-16-2", "2025년 9월 16일 인증서", "gallery")
+  ],
+  "2025-10-24": [certificate("award-2025-10-24", "2025년 10월 24일 수상 상장")],
+  "2025-10-31": [certificate("award-2025-10-31", "2025년 10월 31일 수상 상장")],
+  "2025-11-13": [certificate("award-2025-11-13", "2025년 11월 13일 수상 상장")],
+  "2025-12-02": [
+    certificate("award-2025-12-02", "2025년 12월 2일 수상 상장"),
+    certificate("award-2025-12-02-2", "2025년 12월 2일 추가 수상 상장", "gallery")
+  ]
+};
+
+const item = (input: Omit<PortfolioItem, "visible" | "featured" | "featuredRank" | "images" | "tags"> & Partial<PortfolioItem>): PortfolioItem => {
+  const resolved: PortfolioItem = {
+    visible: true,
+    featured: false,
+    featuredRank: 99,
+    images: [],
+    tags: [],
+    ...input
+  };
+
+  if (resolved.type === "award" && resolved.year && awardImagesByDate[resolved.year]) {
+    resolved.images = awardImagesByDate[resolved.year];
+  }
+
+  return resolved;
 };
 
 export const defaultContent: PortfolioContent = {
@@ -724,7 +792,11 @@ export const defaultContent: PortfolioContent = {
       summaryKo: "실시간 객체 인식으로 노동자의 안전을 지원하는 HUSS AI 경진대회 출품작입니다.",
       summaryEn: "A HUSS AI competition project using real-time object detection for worker safety.",
       year: "2025",
-      tags: ["Swift", "Python", "Object Detection"]
+      tags: ["Swift", "Python", "Object Detection"],
+      images: [
+        { url: "/assets/evidence/projects/posture-detection-pose.png", altKo: "자세 감지 앱 포즈 인식 화면", altEn: "Posture detection pose recognition screen", role: "cover" },
+        { url: "/assets/evidence/projects/posture-detection-flow.png", altKo: "자세 감지 앱 분석 흐름", altEn: "Posture detection analysis flow", role: "gallery" }
+      ]
     }),
     item({
       id: "project-ess",

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  startTransition,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -17,8 +19,6 @@ import type { PortfolioContent, PortfolioImage, PortfolioItem } from "@/lib/type
 type Props = {
   initialContent: PortfolioContent;
 };
-
-type ProjectView = "carousel";
 
 const sections = ["entrance", "intro", "resume", "crossroads", "awards", "projects", "contact"] as const;
 type SectionId = (typeof sections)[number];
@@ -142,12 +142,28 @@ function projectVideoLinks(item: PortfolioItem) {
   return (item.links ?? []).filter((link) => /video|youtu\.be|youtube|shorts/i.test(`${link.label} ${link.url}`));
 }
 
+function useLightweightMobileMode() {
+  const [lightweight, setLightweight] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 980px), (pointer: coarse), (prefers-reduced-motion: reduce)");
+    const update = () => setLightweight(query.matches);
+
+    update();
+    query.addEventListener?.("change", update);
+    return () => {
+      query.removeEventListener?.("change", update);
+    };
+  }, []);
+
+  return lightweight;
+}
+
 export function PortfolioExperience({ initialContent }: Props) {
   const [content, setContent] = useState(initialContent);
   const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
   const [navOpen, setNavOpen] = useState(false);
-  const [projectView, setProjectView] = useState<ProjectView>("carousel");
   const wheelLockRef = useRef(false);
   const projectTrackRef = useRef<HTMLDivElement | null>(null);
 
@@ -164,34 +180,100 @@ export function PortfolioExperience({ initialContent }: Props) {
       .catch(() => setContent(initialContent));
   }, [initialContent]);
 
-  const setSection = (section: SectionId) => {
-    setSelected(null);
-    setNavOpen(false);
-    setActive(sectionIndex(section));
-  };
+  useEffect(() => {
+    const resetActiveScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      const activeScene = document.querySelector<HTMLElement>(`.scene.${sections[active]}.active`);
+      activeScene?.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
-  const goBack = () => {
-    setSelected(null);
-    setActive((value) => {
-      const current = sections[value];
-      if (current === "awards" || current === "projects") return value;
-      if (current === "contact") return sectionIndex("crossroads");
-      return Math.max(0, value - 1);
-    });
-  };
+      activeScene
+        ?.querySelectorAll<HTMLElement>(".content-panel, .awards-toggle-board, .award-list-stack, .featured-project-shell")
+        .forEach((node) => {
+          node.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
+    };
 
-  const goForward = () => {
-    setSelected(null);
-    setActive((value) => {
-      const current = sections[value];
-      if (current === "entrance") return sectionIndex("intro");
-      if (current === "intro") return sectionIndex("resume");
-      if (current === "resume") return sectionIndex("crossroads");
-      return value;
+    resetActiveScroll();
+    const frame = window.requestAnimationFrame(resetActiveScroll);
+    const timer = window.setTimeout(resetActiveScroll, 120);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [active]);
+
+  const selectItem = useCallback((item: PortfolioItem) => {
+    startTransition(() => {
+      setSelected(item);
     });
-  };
+  }, []);
+
+  const closeSelected = useCallback(() => {
+    startTransition(() => {
+      setSelected(null);
+    });
+  }, []);
+
+  const setSection = useCallback((section: SectionId) => {
+    startTransition(() => {
+      setSelected(null);
+      setNavOpen(false);
+      setActive(sectionIndex(section));
+    });
+  }, []);
+
+  const goBack = useCallback(() => {
+    startTransition(() => {
+      setSelected(null);
+      setActive((value) => {
+        const current = sections[value];
+        if (current === "awards" || current === "projects" || current === "contact") return sectionIndex("crossroads");
+        return Math.max(0, value - 1);
+      });
+    });
+  }, []);
+
+  const goForward = useCallback(() => {
+    startTransition(() => {
+      setSelected(null);
+      setActive((value) => {
+        const current = sections[value];
+        if (current === "entrance") return sectionIndex("intro");
+        if (current === "intro") return sectionIndex("resume");
+        if (current === "resume") return sectionIndex("crossroads");
+        return value;
+      });
+    });
+  }, []);
+
+  const goPreviousPage = useCallback(() => {
+    startTransition(() => {
+      setSelected(null);
+      setNavOpen(false);
+      setActive((value) => Math.max(0, value - 1));
+    });
+  }, []);
+
+  const goNextPage = useCallback(() => {
+    startTransition(() => {
+      setSelected(null);
+      setNavOpen(false);
+      setActive((value) => Math.min(sections.length - 1, value + 1));
+    });
+  }, []);
 
   useEffect(() => {
+    const canScrollInside = (node: HTMLElement | null, delta: number) => {
+      if (!node || Math.abs(delta) < 4) return false;
+      const maxScroll = node.scrollHeight - node.clientHeight;
+      if (maxScroll <= 8) return false;
+
+      const atStart = node.scrollTop <= 8;
+      const atEnd = node.scrollTop >= maxScroll - 8;
+      return delta > 0 ? !atEnd : !atStart;
+    };
+
     const navigate = (direction: 1 | -1) => {
       if (wheelLockRef.current || selected) return;
       wheelLockRef.current = true;
@@ -211,29 +293,27 @@ export function PortfolioExperience({ initialContent }: Props) {
       const track = target?.closest<HTMLElement>(".showcase-track");
 
       if (selected) {
+        const modalScrollRoot = target?.closest<HTMLElement>(".expanded-copy");
+        if (canScrollInside(modalScrollRoot ?? null, event.deltaY)) {
+          return;
+        }
         event.preventDefault();
         return;
       }
 
       if (phase === "awards") {
+        const awardScrollRoot =
+          target?.closest<HTMLElement>(".award-list-stack") ??
+          target?.closest<HTMLElement>(".awards-toggle-board");
         const scrollRoot = document.querySelector<HTMLElement>(".scene.awards.active");
         const delta = event.deltaY;
         if (!scrollRoot || Math.abs(delta) < 18) return;
 
-        const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;
-        const atEnd = scrollRoot.scrollTop >= maxScroll - 8;
-        const atStart = scrollRoot.scrollTop <= 8;
-
-        if (delta > 0 && atEnd) {
-          event.preventDefault();
+        if (canScrollInside(awardScrollRoot ?? null, delta) || canScrollInside(scrollRoot, delta)) {
           return;
         }
 
-        if (delta < 0 && atStart) {
-          event.preventDefault();
-          return;
-        }
-
+        event.preventDefault();
         return;
       }
 
@@ -274,6 +354,19 @@ export function PortfolioExperience({ initialContent }: Props) {
       if (Math.abs(event.deltaY) < 24) {
         return;
       }
+
+      const scrollablePanel = target?.closest<HTMLElement>(
+        ".content-panel, .intro-panel, .awards-toggle-board, .featured-project-shell, .contact-deck, .expanded-copy"
+      );
+      if (canScrollInside(scrollablePanel ?? null, event.deltaY)) {
+        return;
+      }
+
+      const activeScene = target?.closest<HTMLElement>(".scene.active");
+      if (canScrollInside(activeScene ?? null, event.deltaY)) {
+        return;
+      }
+
       event.preventDefault();
       navigate(event.deltaY > 0 ? 1 : -1);
     };
@@ -281,10 +374,10 @@ export function PortfolioExperience({ initialContent }: Props) {
     const onKey = (event: KeyboardEvent) => {
       const phase = sections[active];
       if (selected) {
-        if (event.key === "Escape") setSelected(null);
+        if (event.key === "Escape") closeSelected();
         return;
       }
-      if (phase === "projects" && projectView === "carousel" && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
+      if (phase === "projects" && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown", " ", "Backspace"].includes(event.key)) {
         const track = projectTrackRef.current;
         if (track) {
           const maxScroll = track.scrollWidth - track.clientWidth;
@@ -345,7 +438,7 @@ export function PortfolioExperience({ initialContent }: Props) {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKey);
     };
-  }, [active, selected, projectView]);
+  }, [active, selected, goBack, goForward, closeSelected]);
 
   const visibleItems = useMemo(() => content.items.filter((item) => item.visible), [content.items]);
   const awards = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "award")), [visibleItems]);
@@ -353,9 +446,11 @@ export function PortfolioExperience({ initialContent }: Props) {
   const education = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "education")), [visibleItems]);
   const experience = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "experience")), [visibleItems]);
   const certifications = useMemo(() => sortFeatured(visibleItems.filter((item) => item.type === "certification")), [visibleItems]);
-  const featuredProjects = projects.filter((item) => item.featured).slice(0, 5);
+  const featuredProjects = useMemo(() => projects.filter((item) => item.featured).slice(0, 5), [projects]);
   const phase = sections[active] as SectionId;
-  const activeNavTarget = navItems.some((item) => item.target === phase) ? phase : undefined;
+  const activeNavTarget = useMemo(() => (navItems.some((item) => item.target === phase) ? phase : undefined), [phase]);
+  const previousSection = sections[Math.max(active - 1, 0)];
+  const nextSection = sections[Math.min(active + 1, sections.length - 1)];
   const awardBuckets = useMemo(
     () =>
       ["2023", "2024", "2025", "2026"].map((year) => ({
@@ -365,21 +460,19 @@ export function PortfolioExperience({ initialContent }: Props) {
     [awards]
   );
 
-  const scrollTrack = (ref: RefObject<HTMLDivElement | null>, direction: 1 | -1) => {
-    ref.current?.scrollBy({ left: direction * Math.min(window.innerWidth * 0.82, 1040), behavior: "smooth" });
-  };
-
   return (
-    <main className={`experience-shell phase-${phase} entered`}>
+    <main className={`experience-shell phase-${phase} entered ${selected ? "has-modal" : ""}`}>
       <CursorFollower />
       <PolygonBackdrop active />
       <div className="time-layer" aria-hidden="true" />
 
       <header className={`topbar site-nav ${navOpen ? "open" : ""}`}>
-        <button className="menu-toggle magnetic" onClick={() => setNavOpen((value) => !value)} aria-label="메뉴 열기">
-          ☰
-        </button>
-        <nav aria-label="빠른 이동">
+        {active > 0 ? (
+          <button className="topbar-back magnetic" onClick={goBack} aria-label="이전 페이지">
+            ←
+          </button>
+        ) : null}
+        <nav className="primary-nav" aria-label="빠른 이동">
           {navItems.map((item) => (
             <button
               key={item.target}
@@ -390,16 +483,43 @@ export function PortfolioExperience({ initialContent }: Props) {
             </button>
           ))}
         </nav>
-        <a className="icon-button magnetic admin-link" href="/admin">
-          Admin
-        </a>
+        <div className="nav-toggle-wrap">
+          <button className="menu-toggle magnetic" onClick={() => setNavOpen((value) => !value)} aria-label="메뉴 열기" aria-expanded={navOpen}>
+            ☰
+          </button>
+          <div className="nav-menu-panel">
+            <div className="nav-menu-links">
+              {navItems.map((item) => (
+                <button
+                  key={item.target}
+                  className={`icon-button magnetic ${activeNavTarget === item.target ? "active" : ""}`}
+                  onClick={() => setSection(item.target)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <a className="icon-button magnetic admin-link" href="/admin">
+              Admin
+            </a>
+          </div>
+        </div>
       </header>
 
-      {active > 0 ? (
-        <button className="prev-route magnetic" onClick={goBack} aria-label="이전 페이지">
-          ←
+      <nav className="mobile-page-controls" aria-label="모바일 페이지 이동">
+        <button type="button" className="mobile-page-button magnetic" onClick={goPreviousPage} disabled={active === 0}>
+          <span>이전</span>
+          <small>{sectionLabels[previousSection]}</small>
         </button>
-      ) : null}
+        <div className="mobile-page-status" aria-live="polite">
+          <span>{String(active + 1).padStart(2, "0")} / {String(sections.length).padStart(2, "0")}</span>
+          <strong>{sectionLabels[phase]}</strong>
+        </div>
+        <button type="button" className="mobile-page-button next magnetic" onClick={goNextPage} disabled={active === sections.length - 1}>
+          <span>다음</span>
+          <small>{sectionLabels[nextSection]}</small>
+        </button>
+      </nav>
 
       <div className="scene-stack">
         <section className={`scene entrance ${active === 0 ? "active" : ""}`}>
@@ -437,9 +557,9 @@ export function PortfolioExperience({ initialContent }: Props) {
               </div>
             </div>
             <div className="intro-detail-dock">
-              <IntroColumn title="학력" items={education} onSelect={setSelected} />
-              <IntroColumn title="경력" items={experience} onSelect={setSelected} />
-              <IntroColumn title="자격" items={certifications} onSelect={setSelected} />
+              <IntroColumn title="학력" items={education} onSelect={selectItem} />
+              <IntroColumn title="경력" items={experience} onSelect={selectItem} />
+              <IntroColumn title="자격" items={certifications} onSelect={selectItem} />
             </div>
           </div>
         </section>
@@ -457,7 +577,7 @@ export function PortfolioExperience({ initialContent }: Props) {
                   item={featuredProjects[0]}
                   index={0}
                   total={featuredProjects.length}
-                  onSelect={setSelected}
+                  onSelect={selectItem}
                   large
                   fallbackImage="/assets/evidence/project-car-1.jpg"
                 />
@@ -469,7 +589,7 @@ export function PortfolioExperience({ initialContent }: Props) {
                     item={item}
                     index={index + 1}
                     total={featuredProjects.length}
-                    onSelect={setSelected}
+                    onSelect={selectItem}
                     fallbackImage="/assets/evidence/project-car-1.jpg"
                   />
                 ))}
@@ -502,22 +622,15 @@ export function PortfolioExperience({ initialContent }: Props) {
         </section>
 
         <section className={`scene awards ${active === 4 ? "active" : ""}`}>
-          <BackArrow onClick={() => setSection("crossroads")} />
-          <AwardsYearBoard buckets={awardBuckets} onSelect={setSelected} />
+          <AwardsYearBoard buckets={awardBuckets} onSelect={selectItem} />
         </section>
 
         <section className={`scene projects ${active === 5 ? "active" : ""}`}>
-          <BackArrow onClick={() => setSection("crossroads")} />
           <div className="project-stage carousel-mode">
             <div className="project-stage-header">
               <div>
                 <p className="eyebrow">PROJECT SHOWCASE</p>
                 <h2 className="panel-title">프로젝트 기록</h2>
-              </div>
-              <div className="project-view-toggle" role="tablist" aria-label="프로젝트 보기 방식">
-                <button className={projectView === "carousel" ? "active" : ""} onClick={() => setProjectView("carousel")}>
-                  CAROUSEL
-                </button>
               </div>
             </div>
 
@@ -528,9 +641,7 @@ export function PortfolioExperience({ initialContent }: Props) {
               title=""
               items={projects}
               trackRef={projectTrackRef}
-              onSelect={setSelected}
-              onPrev={() => scrollTrack(projectTrackRef, -1)}
-              onNext={() => scrollTrack(projectTrackRef, 1)}
+              onSelect={selectItem}
             />
           </div>
         </section>
@@ -543,17 +654,9 @@ export function PortfolioExperience({ initialContent }: Props) {
       </div>
 
       <AnimatePresence>
-        {selected ? <ExpandedCard key={selected.id} item={selected} onClose={() => setSelected(null)} /> : null}
+        {selected ? <ExpandedCard key={selected.id} item={selected} onClose={closeSelected} /> : null}
       </AnimatePresence>
     </main>
-  );
-}
-
-function BackArrow({ onClick }: { onClick: () => void }) {
-  return (
-    <button className="route-back-arrow magnetic" onClick={onClick} aria-label="갈림길로 돌아가기">
-      ⌫
-    </button>
   );
 }
 
@@ -634,10 +737,13 @@ function AwardsYearBoard({
 }) {
   const initialYear = buckets.find((bucket) => bucket.items.length)?.year ?? buckets[0]?.year ?? "2025";
   const [activeYear, setActiveYear] = useState(initialYear);
+  const simpleMobileList = useLightweightMobileMode();
 
   useEffect(() => {
     if (!buckets.some((bucket) => bucket.year === activeYear && bucket.items.length)) {
-      setActiveYear(initialYear);
+      startTransition(() => {
+        setActiveYear(initialYear);
+      });
     }
   }, [activeYear, buckets, initialYear]);
 
@@ -657,7 +763,11 @@ function AwardsYearBoard({
           <button
             key={bucket.year}
             className={`magnetic ${bucket.year === activeYear ? "active" : ""}`}
-            onClick={() => setActiveYear(bucket.year)}
+            onClick={() => {
+              startTransition(() => {
+                setActiveYear(bucket.year);
+              });
+            }}
             role="tab"
             aria-selected={bucket.year === activeYear}
           >
@@ -677,7 +787,7 @@ function AwardsYearBoard({
         <div className="award-list-stack">
           {activeBucket?.items.length ? (
             activeBucket.items.map((item, index) => (
-              <AwardRecordCard key={item.id} item={item} index={index} onSelect={onSelect} />
+              <AwardRecordCard key={item.id} item={item} index={index} onSelect={onSelect} simpleList={simpleMobileList} />
             ))
           ) : (
             <div className="award-empty-card">
@@ -691,19 +801,32 @@ function AwardsYearBoard({
   );
 }
 
-function AwardRecordCard({ item, index, onSelect }: { item: PortfolioItem; index: number; onSelect: (item: PortfolioItem) => void }) {
+function AwardRecordCard({
+  item,
+  index,
+  onSelect,
+  simpleList
+}: {
+  item: PortfolioItem;
+  index: number;
+  onSelect: (item: PortfolioItem) => void;
+  simpleList: boolean;
+}) {
   const awardTitle = splitAwardTitle(koText(item, "title"));
   const certificate = item.images.find((entry) => entry.role === "certificate") ?? item.images[0];
 
   return (
-    <button className={`award-record-card magnetic ${certificate ? "has-certificate" : ""}`} onClick={() => onSelect(item)}>
+    <button
+      className={`award-record-card magnetic ${certificate && !simpleList ? "has-certificate" : ""} ${simpleList ? "simple-list" : ""}`}
+      onClick={() => onSelect(item)}
+    >
       <div className="award-record-index">
         <span>{String(index + 1).padStart(2, "0")}</span>
         <small>{item.year}</small>
       </div>
-      {certificate ? (
+      {certificate && !simpleList ? (
         <div className="award-record-certificate" aria-hidden="true">
-          <img src={certificate.url} alt="" />
+          <img src={certificate.url} alt="" loading="lazy" decoding="async" />
         </div>
       ) : null}
       <div className="award-record-main">
@@ -728,8 +851,6 @@ function ShowcaseDeck({
   items,
   trackRef,
   onSelect,
-  onPrev,
-  onNext,
   fallbackImage,
   compact,
   variant
@@ -739,8 +860,6 @@ function ShowcaseDeck({
   items: PortfolioItem[];
   trackRef: RefObject<HTMLDivElement | null>;
   onSelect: (item: PortfolioItem) => void;
-  onPrev: () => void;
-  onNext: () => void;
   fallbackImage?: string;
   compact?: boolean;
   variant?: "default" | "project";
@@ -748,13 +867,22 @@ function ShowcaseDeck({
   const [activeIndex, setActiveIndex] = useState(0);
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
   const rafRef = useRef(0);
+  const scrollSettleRef = useRef(0);
+  const lightweightProjectMode = useLightweightMobileMode();
   const activeItem = items[Math.min(activeIndex, items.length - 1)];
-  const nextItem = items.length > 1 ? items[(activeIndex + 1) % items.length] : activeItem;
   const activeVisual = activeItem ? resolveProjectVisual(activeItem) : "";
 
   const focusCard = (index: number) => {
-    setActiveIndex(index);
-    itemRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    startTransition(() => {
+      setActiveIndex(index);
+    });
+    window.requestAnimationFrame(() => {
+      itemRefs.current[index]?.scrollIntoView({
+        behavior: lightweightProjectMode ? "auto" : "smooth",
+        inline: "center",
+        block: "nearest"
+      });
+    });
   };
 
   useEffect(() => {
@@ -776,11 +904,16 @@ function ShowcaseDeck({
           closestDistance = distance;
         }
       });
-      setActiveIndex(closest);
+      setActiveIndex((value) => (value === closest ? value : closest));
     };
 
     const onScroll = () => {
       window.cancelAnimationFrame(rafRef.current);
+      window.clearTimeout(scrollSettleRef.current);
+      if (variant === "project" && lightweightProjectMode) {
+        scrollSettleRef.current = window.setTimeout(updateActive, 90);
+        return;
+      }
       rafRef.current = window.requestAnimationFrame(updateActive);
     };
 
@@ -791,8 +924,9 @@ function ShowcaseDeck({
       track.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", updateActive);
       window.cancelAnimationFrame(rafRef.current);
+      window.clearTimeout(scrollSettleRef.current);
     };
-  }, [items, trackRef]);
+  }, [items, trackRef, variant, lightweightProjectMode]);
 
   return (
     <div className={`showcase-stage ${compact ? "compact" : ""} ${variant === "project" ? "project-reel-stage" : ""}`}>
@@ -805,40 +939,47 @@ function ShowcaseDeck({
       </div>
       {variant === "project" && activeItem ? (
         <div className="project-cinematic-shell">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={`${activeItem.id}-${activeVisual}`}
-              className="project-background-stage"
-              style={{ backgroundImage: `url(${activeVisual})` }}
-              initial={{
-                opacity: 0,
-                scale: 0.42,
-                x: 250,
-                y: 170,
-                clipPath: "inset(42% 5% 8% 58% round 26px)"
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                x: 0,
-                y: 0,
-                clipPath: "inset(0% 0% 0% 0% round 32px)"
-              }}
-              exit={{ opacity: 0, scale: 1.04, filter: "blur(10px)", transition: { duration: 0.22 } }}
-              transition={{ duration: 0.46, ease: [0.2, 0.8, 0.2, 1] }}
-            >
-              <motion.img
-                key={activeVisual}
-                src={activeVisual}
-                alt={koText(activeItem, "title")}
-                initial={{ scale: 1.14 }}
-                animate={{ scale: 1.02 }}
-                exit={{ scale: 1.12 }}
-                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              />
+          {lightweightProjectMode ? (
+            <div className="project-background-stage project-background-stage-static">
+              <img src={activeVisual} alt={koText(activeItem, "title")} loading="eager" decoding="async" />
               <div className="project-background-overlay" />
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ) : (
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={`${activeItem.id}-${activeVisual}`}
+                className="project-background-stage"
+                style={{ backgroundImage: `url(${activeVisual})` }}
+                initial={{
+                  opacity: 0,
+                  scale: 0.42,
+                  x: 250,
+                  y: 170,
+                  clipPath: "inset(42% 5% 8% 58% round 26px)"
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  x: 0,
+                  y: 0,
+                  clipPath: "inset(0% 0% 0% 0% round 32px)"
+                }}
+                exit={{ opacity: 0, scale: 1.04, filter: "blur(10px)", transition: { duration: 0.22 } }}
+                transition={{ duration: 0.46, ease: [0.2, 0.8, 0.2, 1] }}
+              >
+                <motion.img
+                  key={activeVisual}
+                  src={activeVisual}
+                  alt={koText(activeItem, "title")}
+                  initial={{ scale: 1.14 }}
+                  animate={{ scale: 1.02 }}
+                  exit={{ scale: 1.12 }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                />
+                <div className="project-background-overlay" />
+              </motion.div>
+            </AnimatePresence>
+          )}
 
           <aside className="project-story-panel">
             <span>
@@ -870,12 +1011,9 @@ function ShowcaseDeck({
                   }}
                   onFocusCard={() => focusCard(index)}
                   onSelect={onSelect}
+                  lightweight={lightweightProjectMode}
                 />
               ))}
-            </div>
-            <div className="project-controls floating">
-              <button className="magnetic" onClick={onPrev}>PREV</button>
-              <button className="magnetic" onClick={onNext}>NEXT</button>
             </div>
           </div>
         </div>
@@ -898,10 +1036,6 @@ function ShowcaseDeck({
                 onFocusCard={() => focusCard(index)}
               />
             ))}
-          </div>
-          <div className="project-controls">
-            <button className="magnetic" onClick={onPrev}>PREV</button>
-            <button className="magnetic" onClick={onNext}>NEXT</button>
           </div>
         </>
       ) : null}
@@ -949,7 +1083,6 @@ function ReelsCard({
   return (
     <motion.article
       ref={register}
-      layoutId={`portfolio-card-${item.id}`}
       className={`reels-card magnetic ${active ? "active" : ""}`}
       role="button"
       tabIndex={0}
@@ -962,7 +1095,7 @@ function ReelsCard({
       }}
       transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
     >
-      <motion.div className="reels-card-media" layoutId={`portfolio-card-media-${item.id}`}>
+      <motion.div className="reels-card-media">
         {image ? <img src={image} alt={alt} /> : <div className="image-placeholder" />}
       </motion.div>
       <motion.div className="reels-card-copy">
@@ -983,7 +1116,8 @@ function CompactProjectCard({
   active,
   onSelect,
   onFocusCard,
-  register
+  register,
+  lightweight
 }: {
   item: PortfolioItem;
   index: number;
@@ -992,6 +1126,7 @@ function CompactProjectCard({
   onSelect: (item: PortfolioItem) => void;
   onFocusCard: () => void;
   register: (node: HTMLElement | null) => void;
+  lightweight: boolean;
 }) {
   const image = resolveProjectVisual(item);
   const handleClick = () => {
@@ -1001,20 +1136,24 @@ function CompactProjectCard({
     }
     onFocusCard();
   };
+  const motionProps = lightweight
+    ? {}
+    : {
+        animate: { opacity: active ? 1 : 0.54, y: active ? -12 : 4, scale: active ? 1.04 : 0.94 },
+        transition: { type: "spring" as const, stiffness: 240, damping: 24, mass: 0.8 }
+      };
 
   return (
     <motion.button
       ref={register}
       type="button"
-      layoutId={`portfolio-card-${item.id}`}
       className={`project-rail-card magnetic ${active ? "active" : ""}`}
       onClick={handleClick}
       onKeyDown={(event) => clickCardOnKey(event, handleClick)}
-      animate={{ opacity: active ? 1 : 0.54, y: active ? -12 : 4, scale: active ? 1.04 : 0.94 }}
-      transition={{ type: "spring", stiffness: 240, damping: 24, mass: 0.8 }}
+      {...motionProps}
     >
-      <motion.div className="project-rail-media" layoutId={`portfolio-card-media-${item.id}`}>
-        <img src={image} alt={koText(item, "title")} />
+      <motion.div className="project-rail-media">
+        <img src={image} alt={koText(item, "title")} loading={index < 6 ? "eager" : "lazy"} decoding="async" />
       </motion.div>
       <div className="project-rail-copy">
         <span>{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
@@ -1141,11 +1280,13 @@ function ExpandedCard({ item, onClose }: { item: PortfolioItem; onClose: () => v
     >
       <motion.article
         className="expanded-card"
-        layoutId={`portfolio-card-${item.id}`}
+        initial={{ opacity: 0, scale: 0.97, y: 18 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: 12 }}
         onClick={(event) => event.stopPropagation()}
-        transition={{ type: "spring", stiffness: 210, damping: 26, mass: 0.95 }}
+        transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
       >
-        <motion.div className="expanded-media" layoutId={`portfolio-card-media-${item.id}`}>
+        <motion.div className="expanded-media">
           {image ? <img src={image} alt={alt} /> : <div className="image-placeholder" />}
         </motion.div>
         <motion.div

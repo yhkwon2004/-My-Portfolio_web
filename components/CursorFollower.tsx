@@ -68,18 +68,20 @@ export function CursorFollower() {
     };
 
     const onPointerDown = () => {
-      for (let i = 0; i < 14; i += 1) {
-        const angle = (Math.PI * 2 * i) / 14;
-        sparks.push({
-          x: mouseX,
-          y: mouseY,
-          dx: Math.cos(angle) * (1.2 + (i % 3) * 0.35),
-          dy: Math.sin(angle) * (1.2 + (i % 3) * 0.35),
-          age: 0
-        });
-      }
-      halo.classList.add("cursor-pulse");
-      window.setTimeout(() => halo.classList.remove("cursor-pulse"), 360);
+      window.requestAnimationFrame(() => {
+        for (let i = 0; i < 10; i += 1) {
+          const angle = (Math.PI * 2 * i) / 10;
+          sparks.push({
+            x: mouseX,
+            y: mouseY,
+            dx: Math.cos(angle) * (1.2 + (i % 3) * 0.35),
+            dy: Math.sin(angle) * (1.2 + (i % 3) * 0.35),
+            age: 0
+          });
+        }
+        halo.classList.add("cursor-pulse");
+        window.setTimeout(() => halo.classList.remove("cursor-pulse"), 320);
+      });
     };
 
     const drawSparks = () => {
@@ -121,8 +123,8 @@ export function CursorFollower() {
 
     resize();
     window.addEventListener("resize", resize);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
     raf = window.requestAnimationFrame(frame);
 
     return () => {

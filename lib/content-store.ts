@@ -65,12 +65,49 @@ function redisClient() {
   return new Redis({ url, token });
 }
 
+function isBundledAsset(url: string) {
+  return url.startsWith("/assets/");
+}
+
+function shouldRefreshSeedImages(seedItem: PortfolioContent["items"][number], storedItem: PortfolioContent["items"][number]) {
+  if (!seedItem.images.length) return false;
+  if (!storedItem.images.length) return true;
+
+  const storedUsesOnlyBundledAssets = storedItem.images.every((image) => isBundledAsset(image.url));
+
+  if (seedItem.type === "award" && seedItem.images.some((image) => image.url.startsWith("/assets/evidence/awards/"))) {
+    return storedUsesOnlyBundledAssets;
+  }
+
+  if (seedItem.type === "project" && storedUsesOnlyBundledAssets) {
+    return seedItem.images.length > storedItem.images.length;
+  }
+
+  return false;
+}
+
+function mergeStoredItem(seedItem: PortfolioContent["items"][number], storedItem: PortfolioContent["items"][number]) {
+  const images = shouldRefreshSeedImages(seedItem, storedItem) ? seedItem.images : storedItem.images;
+
+  return {
+    ...seedItem,
+    ...storedItem,
+    tags: storedItem.tags.length ? storedItem.tags : seedItem.tags,
+    images,
+    links: storedItem.links ?? seedItem.links,
+    details: storedItem.details ?? seedItem.details
+  };
+}
+
 function mergeWithDefaults(content: PortfolioContent): PortfolioContent {
   const storedItems = new Map(content.items.map((item) => [item.id, item]));
   const defaultIds = new Set(seedContent.items.map((item) => item.id));
 
   const items = [
-    ...seedContent.items.map((item) => storedItems.get(item.id) ?? item),
+    ...seedContent.items.map((item) => {
+      const storedItem = storedItems.get(item.id);
+      return storedItem ? mergeStoredItem(item, storedItem) : item;
+    }),
     ...content.items.filter((item) => !defaultIds.has(item.id))
   ];
 

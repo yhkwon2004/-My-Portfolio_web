@@ -21,6 +21,7 @@ export function PolygonBackdrop({ active }: { active: boolean }) {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const stillMode = reducedMotion || coarsePointer;
     const points: Point[] = [];
     let frame = 0;
     let raf = 0;
@@ -52,7 +53,7 @@ export function PolygonBackdrop({ active }: { active: boolean }) {
       context.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       points.forEach((point) => {
-        if (!reducedMotion) {
+        if (!stillMode) {
           point.x += point.vx;
           point.y += point.vy;
         }
@@ -82,7 +83,7 @@ export function PolygonBackdrop({ active }: { active: boolean }) {
       }
 
       points.forEach((point, index) => {
-        const pulse = reducedMotion ? 1 : 1 + Math.sin(frame * 0.015 + index) * 0.28;
+        const pulse = stillMode ? 1 : 1 + Math.sin(frame * 0.015 + index) * 0.28;
         const gradient = context.createRadialGradient(point.x, point.y, 0, point.x, point.y, 32 * pulse);
         gradient.addColorStop(0, "rgba(255, 255, 255, 0.28)");
         gradient.addColorStop(0.42, "rgba(255, 108, 207, 0.12)");
@@ -93,16 +94,22 @@ export function PolygonBackdrop({ active }: { active: boolean }) {
         context.fill();
       });
 
-      raf = window.requestAnimationFrame(draw);
+      if (!stillMode) {
+        raf = window.requestAnimationFrame(draw);
+      }
     };
 
     resize();
     draw();
-    window.addEventListener("resize", resize);
+    const onResize = () => {
+      resize();
+      if (stillMode) draw();
+    };
+    window.addEventListener("resize", onResize);
 
     return () => {
       window.cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onResize);
     };
   }, [active]);
 

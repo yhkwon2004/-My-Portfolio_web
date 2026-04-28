@@ -4,6 +4,7 @@ node_modules
 .vercel
 .tools
 .next-dev.*.log
+.next-start-*.log
 public/uploads
 *.tsbuildinfo
 .next-dev.*.log
